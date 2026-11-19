@@ -61,6 +61,8 @@ const trafficLightsList = [];
 const clickableHouses = [];
 const citizenAvatars = [];
 const birdsList = [];
+const treePerches = [];
+let meadowGrass;
 const firefliesList = [];
 const owlsList = [];
 const cloudsList = [];
@@ -131,6 +133,75 @@ function buildFloatingIslandBase(width, depth, centerX, centerZ) {
 
   isl.position.set(centerX, 0, centerZ);
   cityGroup.add(isl);
+}
+
+// A single folded, eight-panel canopy with alternating fabric and a scalloped edge.
+function createParasol(color) {
+  const parasol = new THREE.Group();
+  const positions = [], colors = [];
+  const fabric = new THREE.Color(color);
+  const linen = new THREE.Color(0xffefc7);
+  function triangle(a, b, c, tint) {
+    positions.push(...a, ...b, ...c);
+    for (let k = 0; k < 3; k++) colors.push(tint.r, tint.g, tint.b);
+  }
+  function point(angle, radius, height) {
+    return [Math.sin(angle) * radius, height, Math.cos(angle) * radius];
+  }
+  for (let i = 0; i < 16; i++) {
+    const a = i * Math.PI / 8, b = (i + 1) * Math.PI / 8;
+    const tint = Math.floor(i / 2) % 2 ? linen : fabric;
+    const midA = point(a, 0.72, 3.06), midB = point(b, 0.72, 3.06);
+    const rimA = point(a, 1.3, 2.76), rimB = point(b, 1.3, 2.76);
+    const hemA = point(a, 1.3, i % 2 ? 2.56 : 2.70);
+    const hemB = point(b, 1.3, i % 2 ? 2.70 : 2.56);
+    triangle([0,3.28,0], midA, midB, tint);
+    triangle(midA, rimA, rimB, tint);
+    triangle(midA, rimB, midB, tint);
+    triangle(rimA, hemA, hemB, tint);
+    triangle(rimA, hemB, rimB, tint);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geometry.computeVertexNormals();
+  const canopy = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+    vertexColors: true, side: THREE.DoubleSide, flatShading: true, roughness: 0.9
+  }));
+  canopy.castShadow = true;
+  parasol.add(canopy, createBlock(0.09, 3.32, 0.09, 0x794b2e, 0, 1.66, 0));
+  parasol.add(createBlock(0.42, 0.16, 0.42, 0x718286, 0, 0.08, 0));
+  return parasol;
+}
+
+function buildMeadowGrass() {
+  // Plant only in open meadow strips behind the residential streets.
+  const patches = [[-24,-29], [24,-29], [-24,29], [24,29], [-33,-18], [33,-18], [-33,18], [33,18]];
+  const tuftsPerPatch = 38;
+  const blades = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),
+    new THREE.MeshLambertMaterial({color: 0xffffff}), patches.length * tuftsPerPatch * 3);
+  let seed = 3817, index = 0;
+  function random() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
+  const blade = new THREE.Object3D();
+  const palette = [0x76b84e, 0x518e39, 0x96c75a].map(color => new THREE.Color(color));
+  for (const [cx, cz] of patches) {
+    for (let tuft = 0; tuft < tuftsPerPatch; tuft++) {
+      const x = cx + (random() - 0.5) * 8, z = cz + (random() - 0.5) * 8;
+      const yaw = random() * Math.PI * 2;
+      for (let side = -1; side <= 1; side++) {
+        const height = (side === 0 ? 0.54 : 0.35) + random() * 0.27;
+        blade.position.set(x + Math.cos(yaw) * side * 0.13, height / 2, z - Math.sin(yaw) * side * 0.13);
+        blade.rotation.set(0, yaw, -side * 0.28, "YXZ");
+        blade.scale.set(0.12, height, 0.12);
+        blade.updateMatrix();
+        blades.setMatrixAt(index, blade.matrix);
+        blades.setColorAt(index++, palette[tuft % palette.length]);
+      }
+    }
+  }
+  blades.receiveShadow = true;
+  cityGroup.add(blades);
+  return blades;
 }
 
 function createSingleHousePlot(houseId, x, z, rot) {
@@ -299,12 +370,6 @@ function spawnCitizenAvatarOnHouse(houseGroup, username, fallbackColor, avatarTy
     charGroup.add(legL, legR, body, armL, armR, head, hair, eyeL, eyeR);
   }
 
-  const citizenUmbrella = new THREE.Group();
-  citizenUmbrella.add(createBlock(0.08, 1.5, 0.08, 0xe2e8f0, 0.55, 1.8, 0.2));
-  citizenUmbrella.add(createBlock(1.5, 0.18, 1.5, fallbackColor, 0.55, 2.55, 0.2));
-  citizenUmbrella.visible = false;
-  charGroup.add(citizenUmbrella);
-
   const handSnowball = createBlock(0.26, 0.26, 0.26, 0xffffff, 0.55, 1.1, 0.35);
   handSnowball.visible = false;
   charGroup.add(handSnowball);
@@ -312,7 +377,6 @@ function spawnCitizenAvatarOnHouse(houseGroup, username, fallbackColor, avatarTy
   charGroup.position.set(0.8, 0.18, 2.65);
   charGroup.userData = {
     legL, legR, armL, armR,
-    citizenUmbrella,
     handSnowball,
     isNaoya,
     phase: houseGroup.userData.id * 1.3
@@ -378,10 +442,7 @@ function buildSeasonalBiomes() {
     [-9.8, -15.5, 0x38bdf8], [-9.8, -6.5, 0xf97316]
   ];
   beachSpots.forEach(([bx, bz, col]) => {
-    const umb = new THREE.Group();
-    umb.add(createBlock(0.14, 2.4, 0.14, 0xf8fafc, 0, 1.2, 0));
-    umb.add(createBlock(2.2, 0.25, 2.2, col, 0, 2.35, 0));
-    umb.add(createBlock(1.4, 0.2, 1.4, 0xffffff, 0, 2.52, 0));
+    const umb = createParasol(col);
     umb.add(createBlock(0.9, 0.2, 1.6, 0xfef08a, 0.6, 0.2, 0));
     umb.add(createBlock(0.9, 0.45, 0.3, 0xfacc15, 0.6, 0.4, -0.65));
     umb.position.set(bx, 0.1, bz);
@@ -654,6 +715,9 @@ function createOakTree(x, z, scale = 1) {
   const leaf2 = createBlock(1.4 * scale, 1.0 * scale, 1.4 * scale, 0x22c55e, 0, 3.1 * scale, 0);
   treeFoliageMaterials.push(leaf1.material, leaf2.material);
   g.add(leaf1, leaf2);
+  const side = x > 0 ? -1 : 1;
+  g.add(createBlock(1.18 * scale, 0.16 * scale, 0.2 * scale, 0x784625, side * 0.65 * scale, 1.38 * scale, 0));
+  treePerches.push(new THREE.Vector3(x + side * 1.03 * scale, 1.46 * scale + 0.10, z));
   g.position.set(x, 0, z);
   cityGroup.add(g);
 }
@@ -747,6 +811,8 @@ function spawnDayBirds() {
 
     bird.userData = {
       leftWing, rightWing,
+      perch: treePerches[i % treePerches.length],
+      departure: 1,
       rx: 12 + (i % 4) * 5,
       rz: 10 + ((i + 2) % 4) * 5,
       freqX: 0.005 + (i % 3) * 0.002,
@@ -830,6 +896,7 @@ const initialHouseCoords = [
 function buildWorld() {
   buildFloatingIslandBase(76, 76, 0, 0);
   buildRoundaboutAndRoads();
+  meadowGrass = buildMeadowGrass();
 
   const busStop = new THREE.Group();
   busStop.add(createBlock(3.2, 0.2, 1.6, 0x64748b, 0, 0.1, 0));
@@ -953,8 +1020,8 @@ buildWorld();
 const seasons = [
   {
     id: "sakura",
-    badge: "🌸 SAKURA",
-    biomeLabel: "🍱 Hanami Picnic & Bunnies",
+    badge: "🌸 Sakura",
+    biomeLabel: "Kelinci di taman",
     groundHex: 0x4ade80,
     foliagePalette: [0xf472b6, 0xf9a8d4, 0xfbcfe8],
     skyDayHex: 0x93c5fd,
@@ -968,8 +1035,8 @@ const seasons = [
   },
   {
     id: "summer",
-    badge: "☀️ SUMMER",
-    biomeLabel: "🏐 Beach Balls & Ducks",
+    badge: "☀️ Kemarau",
+    biomeLabel: "Bebek di taman",
     groundHex: 0x22c55e,
     foliagePalette: [0x15803d, 0x22c55e, 0x16a34a],
     skyDayHex: 0x38bdf8,
@@ -983,8 +1050,8 @@ const seasons = [
   },
   {
     id: "autumn",
-    badge: "🍂 AUTUMN",
-    biomeLabel: "🔥 Campfires & Foxes",
+    badge: "🍂 Gugur",
+    biomeLabel: "Rubah di taman",
     groundHex: 0xca8a04,
     foliagePalette: [0xd97706, 0xea580c, 0xb45309],
     skyDayHex: 0xfdba74,
@@ -998,8 +1065,8 @@ const seasons = [
   },
   {
     id: "rain",
-    badge: "🌧️ RAINY",
-    biomeLabel: "☔ Umbrellas & Puddle Jumps",
+    badge: "🌧️ Hujan",
+    biomeLabel: "Burung berteduh",
     groundHex: 0x15803d,
     foliagePalette: [0x166534, 0x14532d, 0x065f46],
     skyDayHex: 0x64748b,
@@ -1013,8 +1080,8 @@ const seasons = [
   },
   {
     id: "snow",
-    badge: "❄️ SNOW",
-    biomeLabel: "⛄ Snowball Fights & Snowmen",
+    badge: "❄️ Salju",
+    biomeLabel: "Salju di taman",
     groundHex: 0xf8fafc,
     foliagePalette: [0xe2e8f0, 0xf1f5f9, 0xcbd5e1],
     skyDayHex: 0xcbd5e1,
@@ -1065,7 +1132,6 @@ function updateGlobalSyncedEnvironment() {
     });
 
     citizenAvatars.forEach(av => {
-      if (av.userData.citizenUmbrella) av.userData.citizenUmbrella.visible = (s.id === "rain");
       if (av.userData.handSnowball) av.userData.handSnowball.visible = (s.id === "snow");
     });
 
@@ -1086,8 +1152,23 @@ function updateGlobalSyncedEnvironment() {
     hemiLight.groundColor.setHex(isNight ? 0x090d16 : s.hemiGroundHex);
     sunLight.intensity = isNight ? 0.35 : (s.id === "rain" ? 0.65 : 1.25);
 
-    birdsList.forEach(b => { b.visible = !isNight; });
-    firefliesList.forEach(f => { f.visible = isNight; });
+    const raining = s.id === "rain";
+    clickableHouses.forEach(({userData: house}) => {
+      if (house.parasol) house.parasol.visible = Boolean(house.owner && raining);
+    });
+    meadowGrass.scale.y = s.id === "snow" ? 0.35 : 1;
+    meadowGrass.material.color.setHex(s.id === "snow" ? 0xd5e7dd : s.id === "autumn" ? 0xf2bd74 : 0xffffff);
+    birdsList.forEach(b => {
+      b.visible = !isNight;
+      if (raining) {
+        b.position.copy(b.userData.perch);
+        b.rotation.set(0, b.userData.phase, 0);
+        b.userData.leftWing.rotation.z = 1.25;
+        b.userData.rightWing.rotation.z = -1.25;
+        b.userData.departure = 0;
+      }
+    });
+    firefliesList.forEach(f => { f.visible = isNight && !raining; });
     owlsList.forEach(o => { o.visible = isNight; });
 
     updateWindowLights();
@@ -1171,6 +1252,13 @@ function refreshHousesState() {
 
     h.userData.yardGroup.visible = Boolean(owner && hasYard);
 
+    if (owner && !h.userData.parasol) {
+      const parasol = createParasol(h.userData.roofColor);
+      parasol.position.set(0.9, 0.2, 3.05);
+      h.add(parasol);
+      h.userData.parasol = parasol;
+    }
+    if (h.userData.parasol) h.userData.parasol.visible = Boolean(owner && seasons[currentSeasonIdx].id === "rain");
     const isVilla = tier.toLowerCase().includes("villa") || tier.toLowerCase().includes("penthouse");
     h.userData.subMesh.visible = !isVilla;
     h.userData.villaMesh.visible = isVilla;
@@ -1181,7 +1269,6 @@ function refreshHousesState() {
       spawnCitizenAvatarOnHouse(h, owner, h.userData.roofColor, avatarType);
       const s = seasons[currentSeasonIdx];
       if (h.userData.avatarMesh) {
-        h.userData.avatarMesh.userData.citizenUmbrella.visible = (s.id === "rain");
         h.userData.avatarMesh.userData.handSnowball.visible = (s.id === "snow");
       }
 
@@ -1418,11 +1505,13 @@ renderer.domElement.addEventListener("pointerup", (e) => {
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
 
-  const intersects = raycaster.intersectObjects(clickableHouses, true);
-  if (intersects.length > 0) {
-    let obj = intersects[0].object;
-    while (obj.parent && !obj.userData.name) obj = obj.parent;
-    if (obj.userData && obj.userData.name) open3DInterior(obj.userData);
+  const intersects = raycaster.intersectObjects([mayorGroup, ...clickableHouses], true);
+  for (const hit of intersects) {
+    let obj = hit.object;
+    while (obj.visible && obj.parent && obj !== mayorGroup && !obj.userData.name) obj = obj.parent;
+    if (!obj.visible) continue;
+    if (obj === mayorGroup) return openMayorDialog();
+    if (obj.userData.name) return open3DInterior(obj.userData);
   }
 });
 
@@ -1530,6 +1619,16 @@ function closeInterior() {
 const bubbleEl = document.getElementById("mayorBubble");
 const speechTextEl = document.getElementById("mayorSpeechText");
 
+function openMayorDialog() {
+  document.getElementById("mayorDialog").showModal();
+}
+
+function openMayorService(service) {
+  document.getElementById("mayorDialog").close();
+  if (service === "claim") openClaimModal();
+  if (service === "topup") document.getElementById("topupDialog").showModal();
+}
+
 function openLinkedTopup() {
   const dialog = document.getElementById("topupDialog");
   if (window.location.hash === "#topup" && !dialog.open) dialog.showModal();
@@ -1631,7 +1730,7 @@ function animate() {
     }
   });
 
-  if (!isNight) {
+  if (!isNight && activeSeason.id !== "rain") {
     birdsList.forEach((b, idx) => {
       const u = b.userData;
       const t = tick + u.phase * 100;
@@ -1644,7 +1743,11 @@ function animate() {
       const ny = u.baseY + Math.sin(t * 0.025 + u.phase) * 1.6;
 
       b.position.set(nx, ny, nz);
-      b.lookAt(nx + (nx - prevX), ny + (ny - prevY), nz + (nz - prevZ));
+      if (u.departure < 1) {
+        u.departure = Math.min(1, u.departure + 0.012);
+        b.position.lerp(u.perch, 1 - u.departure);
+      }
+      b.lookAt(2 * b.position.x - prevX, 2 * b.position.y - prevY, 2 * b.position.z - prevZ);
       b.rotation.z = Math.sin(t * u.freqX) * 0.35;
 
       const climbing = (ny - prevY) > -0.005;
@@ -1652,8 +1755,9 @@ function animate() {
       u.leftWing.rotation.z = flap;
       u.rightWing.rotation.z = -flap;
     });
-  } else {
+  } else if (isNight) {
     firefliesList.forEach((f, idx) => {
+      if (!f.visible) return;
       const u = f.userData;
       f.position.x = u.baseX + Math.sin(tick * 0.03 + u.phase) * 1.2;
       f.position.y = u.baseY + Math.cos(tick * 0.04 + idx) * 0.6;
@@ -1707,6 +1811,12 @@ function animate() {
 
   citizenAvatars.forEach((av) => {
     const p = av.userData.phase;
+    if (activeSeason.id === "rain") {
+      av.position.set(0.30, 0.18, 3.06);
+      av.rotation.y = 0;
+      return;
+    }
+    av.position.z = 2.65;
     const speedMult = av.userData.isNaoya ? 0.065 : 0.03;
     const walkOffset = Math.sin(tick * speedMult + p) * 1.15;
     av.position.x = walkOffset;

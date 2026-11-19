@@ -90,7 +90,6 @@ body { color: var(--ink); }
 .city-brand { display: flex; align-items: center; gap: 12px; }
 .city-brand h1 { margin: 0; font: bold 19px/1.2 system-ui,sans-serif; }
 .city-brand p { margin: 3px 0 0; color: #405e60; font-size: 12px; }
-.voxel-icon { display: block; width: 27px; height: 29px; background: linear-gradient(150deg,#a6e69d 0 32%,transparent 33%),linear-gradient(30deg,#3a8761 0 49%,#206643 50%); clip-path: polygon(50% 0,100% 24%,100% 76%,50% 100%,0 76%,0 24%); }
 .citizen-search { position: relative; display: flex; gap: 4px; width: min(310px,100%); }
 .citizen-search input, .city-dialog input:not([type=checkbox]), .city-dialog select {
   box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid #a9c5bc; border-radius: 7px; background: white;
@@ -132,3 +131,59 @@ button.primary { background: var(--aqua); color: #fff; border: 0; }
   #mayorBubble { display: none; }
 }
 .tour-btn { margin-left: auto; color: #175c54; padding: 6px 9px; font: bold 13px system-ui; border: 1px solid var(--edge); border-radius: 6px; background: white; cursor: pointer; }
+
+/* Sky-blue field map, pixel-item hotbar and town hall services. */
+:root { --ink: #183852; --edge: #b7cfdf; --aqua: #276a86; --tile: #ffffff80; }
+.item-icon {
+  display: inline-block; flex: 0 0 auto; width: var(--item-size, 32px); height: var(--item-size, 32px);
+  background: url("ui/city-icons.png") no-repeat; background-size: 600% 100%; image-rendering: pixelated;
+}
+.icon-block { background-position: 0 0; }
+.icon-map { background-position: 20% 0; }
+.icon-home { background-position: 40% 0; }
+.icon-hat { background-position: 60% 0; }
+.icon-coin { background-position: 80% 0; }
+.icon-mayor { background-position: 100% 0; }
+.map-header, .dialog-title {
+  background-color: #e8f5ff;
+  background-image: linear-gradient(var(--tile) 1px, transparent 1px), linear-gradient(90deg,var(--tile) 1px, transparent 1px),linear-gradient(110deg,#c3e5fa, #f7fbff 64%, #d6edfa);
+  background-size: 13px 13px, 13px 13px, auto;
+}
+.map-header { border: 2px solid #456980; border-bottom-width: 4px; border-radius: 10px; box-shadow: inset 0 0 0 2px #fff9, 0 6px 18px #173a502e; }
+.city-brand { gap: 10px; }
+.city-brand .item-icon { --item-size: 43px; filter: drop-shadow(0 2px #fff); }
+.city-brand h1,.dialog-title h2 { color: #1f4662; font: bold clamp(13px,2vw,17px)/1.4 'Press Start 2P',monospace; letter-spacing: -.06em; text-shadow: 1px 2px white; }
+.city-brand p { color: #3a586c; }
+.tour-btn,.citizen-search > button { background: #f4fbff; border: 1px solid #86adc2; color: #244e69; box-shadow: inset 0 -2px #cedeeb; }
+.map-weather { background: #173d53eb; border: 1px solid #a8d3e3; padding: 5px 12px; box-shadow: 0 2px 6px #102c4733; }
+.map-actions { gap: 4px; bottom: max(12px,env(safe-area-inset-bottom)); padding: 5px; background: #254259; border: 2px solid #152e41; border-radius: 10px; box-shadow: inset 0 1px #92b6cc, 0 4px 0 #102334aa, 0 8px 25px #0a253944; }
+.map-actions button {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 4px 13px; border: 1px solid #9fbfce; border-radius: 5px;
+  color: #204158; background: linear-gradient(#f5fcff,#c9e2ef); box-shadow: inset 0 -3px #a7c8d9;
+}
+.map-actions button.primary { color: #243d34; background: linear-gradient(#eff9ca,#b7dda1); box-shadow: inset 0 -3px #95b889; }
+.map-actions button:active { transform: translateY(1px); }
+.city-dialog { border: 2px solid #53788c; border-radius: 10px; background: #f5fbff; box-shadow: 0 8px 36px #10283e55; }
+.dialog-title { border-bottom: 2px solid #bad5e7; }
+.dialog-title h2 { font-size: 14px; line-height: 1.6; }
+.dialog-title button { background: #fff; color: #244965; }
+.mayor-title { justify-content: flex-start; }
+.mayor-title > button { margin-left: auto; }
+.mayor-title p { font-size: 12px; color: #415f75; }
+.mayor-portrait { background: #ffecb9; border: 2px solid #c69b50; border-radius: 6px; padding: 3px; display: flex; }
+.mayor-portrait .item-icon { --item-size: 54px; }
+.mayor-services { display: grid; gap: 10px; padding: 16px; }
+.mayor-services button,.coin-pack { display: flex; align-items: center; gap: 12px; background: #fff; color: var(--ink); border: 1px solid #bdd2df; border-radius: 6px; padding: 11px; text-align: left; }
+.mayor-services button span:last-child,.coin-pack span:last-child { margin-left: auto; }
+.mayor-services small { display: block; color: #89570c; font-size: 12px; }
+.coin-pack { background: #fff2cb; border-color: #ddbc73; }
+:where(.map-header,.map-actions,.city-dialog) :focus-visible { outline: 3px solid #197196; outline-offset: 2px; }
+@media (max-width: 620px) {
+  .city-brand .item-icon { --item-size: 33px; }
+  .map-actions { width: min(370px,calc(100% - 16px)); box-sizing: border-box; }
+  .map-actions button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 1px; padding: 3px 1px 6px; font-size: 11px; }
+  .map-actions .item-icon { --item-size: 26px; }
+  .map-toast { bottom: 85px; }
+  .map-weather { top: 118px; }
+}

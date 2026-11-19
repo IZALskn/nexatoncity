@@ -368,12 +368,6 @@ window.addEventListener("DOMContentLoaded", () => {
     armR.add(foodProp);
 
     // Payung & Bola Salju Musiman (Menempel di Tangan Kiri)
-    const citizenUmbrella = new THREE.Group();
-    citizenUmbrella.add(part(0.08, 1.4, 0.08, 0xe2e8f0, 0, 0.4, 0.2));
-    citizenUmbrella.add(part(1.45, 0.18, 1.45, fallbackColor, 0, 1.1, 0.2));
-    citizenUmbrella.visible = false;
-    armL.add(citizenUmbrella);
-
     const handSnowball = part(0.24, 0.24, 0.24, 0xffffff, 0, -0.65, 0.25);
     handSnowball.visible = false;
     armL.add(handSnowball);
@@ -385,7 +379,6 @@ window.addEventListener("DOMContentLoaded", () => {
       headGroup,
       legL, legR, armL, armR,
       foodProp,
-      citizenUmbrella,
       handSnowball,
       isSeal,
       isNaoya,
@@ -429,7 +422,17 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!av.visible) return;
       const cycleTime = (nowSec + u.phase * 3.5) % 20; // Siklus 20 detik per warga
 
-      u.citizenUmbrella.visible = (activeSeasonId === "rain");
+      if (activeSeasonId === "rain") {
+        av.position.set(0.30, 0.18, 3.06);
+        av.rotation.y = 0;
+        u.rigRoot.position.y = 0;
+        u.foodProp.visible = u.handSnowball.visible = u.sitStool.visible = false;
+        u.legL.rotation.x = u.legR.rotation.x = 0;
+        u.armL.rotation.x = u.armR.rotation.x = u.armR.rotation.z = 0;
+        u.headGroup.rotation.set(0, Math.sin(nowSec + u.phase) * 0.15, 0);
+        return;
+      }
+      av.position.z = 2.65;
       u.handSnowball.visible = (activeSeasonId === "snow" && cycleTime < 9);
 
       if (cycleTime < 9) {

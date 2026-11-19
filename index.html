@@ -29,7 +29,7 @@
   </div>
 
   <header class="map-header">
-    <div class="city-brand"><span class="voxel-icon" aria-hidden="true"></span><div>
+    <div class="city-brand"><span class="item-icon icon-block" aria-hidden="true"></span><div>
       <h1>Nexaton City</h1>
       <p><b id="hudCitizens">–</b> warga · <b id="hudEmpty">–</b> rumah kosong · <b id="hudIslands">1</b> pulau</p>
     </div></div>
@@ -42,11 +42,24 @@
   </header>
   <div class="map-weather"><span id="timeBadge"></span><span id="seasonBadge"></span><span id="biomeHud"></span></div>
   <nav class="map-actions" aria-label="Menu kota">
-    <button onclick="showCityOverview()" title="Tampilkan seluruh permukiman">Peta kota</button>
-    <button class="primary" onclick="openClaimModal()">Daftar rumah</button>
-    <button onclick="document.getElementById('topupDialog').showModal()">Top up</button>
+    <button onclick="showCityOverview()" title="Tampilkan seluruh permukiman"><span class="item-icon icon-map" aria-hidden="true"></span>Peta kota</button>
+    <button class="primary" onclick="openClaimModal()"><span class="item-icon icon-home" aria-hidden="true"></span>Daftar rumah</button>
+    <button onclick="openMayorDialog()"><span class="item-icon icon-hat" aria-hidden="true"></span>Wali kota</button>
+    <button onclick="document.getElementById('topupDialog').showModal()"><span class="item-icon icon-coin" aria-hidden="true"></span>Top up</button>
   </nav>
   <div id="toastMsg" role="status" class="map-toast hidden"></div>
+
+  <dialog id="mayorDialog" class="city-dialog" aria-labelledby="mayorTitle">
+    <div class="dialog-title mayor-title">
+      <span class="mayor-portrait"><span class="item-icon icon-mayor" aria-hidden="true"></span></span>
+      <div><h2 id="mayorTitle">Wali Kota</h2><p>@mayorofnexatoncity</p></div>
+      <button onclick="this.closest('dialog').close()" aria-label="Tutup">×</button>
+    </div>
+    <div class="mayor-services">
+      <button onclick="openMayorService('claim')"><span class="item-icon icon-home" aria-hidden="true"></span><span>Daftar rumah gratis</span><span aria-hidden="true">›</span></button>
+      <button onclick="openMayorService('topup')"><span class="item-icon icon-coin" aria-hidden="true"></span><span>Top up kota<small>Dalam pemeliharaan</small></span><span aria-hidden="true">›</span></button>
+    </div>
+  </dialog>
 
   <dialog id="claimModal" class="city-dialog" aria-labelledby="claimTitle">
     <div class="dialog-title"><h2 id="claimTitle">Daftar rumah gratis</h2><button type="button" onclick="closeClaimModal()" aria-label="Tutup">×</button></div>
@@ -69,7 +82,7 @@
     <div class="promo-content">
       <span class="maint-status">Dalam pemeliharaan</span>
       <p>Top up belum dibuka. Berikut pratinjau paket koin yang sedang disiapkan.</p>
-      <div class="coin-pack"><strong>50 koin kota</strong><span>Rp5.000</span></div>
+      <div class="coin-pack"><span class="item-icon icon-coin" aria-hidden="true"></span><strong>50 koin kota</strong><span>Rp5.000</span></div>
       <small>Harga usulan selama pemeliharaan.</small>
       <video controls playsinline preload="none" aria-label="Video promo Nexaton City" poster="promo/poster.jpg" src="promo/nexaton-city.mp4"></video>
       <a href="https://www.tiktok.com/@mayorofnexatoncity" target="_blank" rel="noopener noreferrer">Lihat TikTok wali kota ↗</a>
