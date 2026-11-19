@@ -80,7 +80,7 @@ body, html {
 :root { --ink: #122d32; --aqua: #17615f; --edge: #c8dcd7; }
 [hidden], .hidden { display: none !important; }
 body { color: var(--ink); }
-.map-header, .map-actions, .city-dialog { font-family: Inter, system-ui, sans-serif; }
+.map-header, .city-dialog { font-family: Inter, system-ui, sans-serif; }
 .map-header {
   position: fixed; z-index: 24; inset: 12px 12px auto; margin: auto; max-width: 860px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -95,17 +95,16 @@ body { color: var(--ink); }
   box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid #a9c5bc; border-radius: 7px; background: white;
   color: var(--ink); padding: 9px 10px; font: inherit; font-size: 16px; user-select: text;
 }
-.citizen-search button,.map-actions button,.city-dialog button { cursor: pointer; font: bold 14px system-ui,sans-serif; }
-.citizen-search button,.map-actions button { padding: 9px 13px; border-radius: 7px; border: 0; background: #e1efe9; color: var(--ink); }
+.citizen-search button,.city-dialog button { cursor: pointer; font: bold 14px system-ui,sans-serif; }
+.citizen-search button { padding: 9px 13px; border-radius: 7px; border: 0; background: #e1efe9; color: var(--ink); }
 .results { position: absolute; z-index: 2; top: calc(100% + 5px); right: 0; left: 0; max-height: 32vh; overflow: auto; background: #fff; border: 1px solid var(--edge); border-radius: 8px; box-shadow: 0 8px 16px #14322533; }
 .results button,.results p { display: block; padding: 10px; font-size: 13px; margin: 0; }
 .results button { width: 100%; text-align: left; background: #fff; }
 .results button:hover,.results button:focus-visible { background: #dff2e8; }
-.map-weather,.map-actions,.map-toast { position: fixed; z-index: 20; left: 50%; transform: translateX(-50%); }
+.map-weather,.map-toast { position: fixed; z-index: 20; left: 50%; transform: translateX(-50%); }
 .map-weather { top: 84px; display: flex; white-space: nowrap; gap: 10px; padding: 5px 10px; border-radius: 20px; font: bold 10px system-ui; color: white; background: #183a40cf; pointer-events: none; }
-.map-actions { bottom: max(14px,env(safe-area-inset-bottom)); display: flex; white-space: nowrap; gap: 5px; background: #f5fcf8; padding: 5px; border-radius: 10px; box-shadow: 0 4px 20px #12363c40; }
 button.primary { background: var(--aqua); color: #fff; border: 0; }
-.map-toast { bottom: 75px; width: max-content; max-width: 90vw; border-radius: 8px; padding: 10px 16px; background: #142f34; color: white; font-size: 13px; text-align: center; }
+.map-toast { bottom: max(18px,env(safe-area-inset-bottom)); width: max-content; max-width: 90vw; border-radius: 8px; padding: 10px 16px; background: #142f34; color: white; font-size: 13px; text-align: center; }
 .city-dialog { box-sizing: border-box; padding: 0; margin: auto; border: 1px solid var(--edge); width: min(410px,calc(100% - 24px)); max-height: 86dvh; overflow: auto; border-radius: 14px; background: #f7fcf9; color: var(--ink); }
 .city-dialog::backdrop { background: #09272abd; }
 .dialog-title,.coin-pack { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -125,12 +124,12 @@ button.primary { background: var(--aqua); color: #fff; border: 0; }
 .promo-content video { display: block; width: auto; height: min(33vh,280px); max-width: 100%; background: #172f35; border-radius: 8px; justify-self: center; }
 .house-label { white-space: nowrap; }
 @media(max-width:620px) {
-  .map-header { flex-wrap: wrap; gap: 7px; padding: 8px 10px; inset: 6px 8px auto; }
-  .citizen-search { width: 100%; }
+  .map-header { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; padding: 8px 10px; inset: 6px 8px auto; }
+  .citizen-search { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .city-menu { grid-column: 2; grid-row: 1; }
   .map-weather { top: 112px; }
   #mayorBubble { display: none; }
 }
-.tour-btn { margin-left: auto; color: #175c54; padding: 6px 9px; font: bold 13px system-ui; border: 1px solid var(--edge); border-radius: 6px; background: white; cursor: pointer; }
 
 /* Sky-blue field map, pixel-item hotbar and town hall services. */
 :root { --ink: #183852; --edge: #b7cfdf; --aqua: #276a86; --tile: #ffffff80; }
@@ -154,16 +153,32 @@ button.primary { background: var(--aqua); color: #fff; border: 0; }
 .city-brand .item-icon { --item-size: 43px; filter: drop-shadow(0 2px #fff); }
 .city-brand h1,.dialog-title h2 { color: #1f4662; font: bold clamp(13px,2vw,17px)/1.4 'Press Start 2P',monospace; letter-spacing: -.06em; text-shadow: 1px 2px white; }
 .city-brand p { color: #3a586c; }
-.tour-btn,.citizen-search > button { background: #f4fbff; border: 1px solid #86adc2; color: #244e69; box-shadow: inset 0 -2px #cedeeb; }
+.citizen-search > button { background: #f4fbff; border: 1px solid #86adc2; color: #244e69; box-shadow: inset 0 -2px #cedeeb; }
 .map-weather { background: #173d53eb; border: 1px solid #a8d3e3; padding: 5px 12px; box-shadow: 0 2px 6px #102c4733; }
-.map-actions { gap: 4px; bottom: max(12px,env(safe-area-inset-bottom)); padding: 5px; background: #254259; border: 2px solid #152e41; border-radius: 10px; box-shadow: inset 0 1px #92b6cc, 0 4px 0 #102334aa, 0 8px 25px #0a253944; }
-.map-actions button {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 48px; padding: 4px 13px; border: 1px solid #9fbfce; border-radius: 5px;
-  color: #204158; background: linear-gradient(#f5fcff,#c9e2ef); box-shadow: inset 0 -3px #a7c8d9;
+.city-menu { position: relative; flex: 0 0 auto; z-index: 3; }
+.city-menu summary {
+  display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px;
+  border: 1px solid #52748a; border-radius: 7px; background: #f4fbff; color: #244965;
+  font: bold 14px system-ui,sans-serif; cursor: pointer; list-style: none; box-shadow: inset 0 -2px #cedeeb;
 }
-.map-actions button.primary { color: #243d34; background: linear-gradient(#eff9ca,#b7dda1); box-shadow: inset 0 -3px #95b889; }
-.map-actions button:active { transform: translateY(1px); }
+.city-menu summary::-webkit-details-marker { display: none; }
+.city-menu summary::after {
+  content: ""; width: 7px; height: 7px; border: solid currentColor; border-width: 0 2px 2px 0;
+  transform: translateY(-2px) rotate(45deg);
+}
+.city-menu[open] summary::after { transform: translateY(2px) rotate(225deg); }
+.city-menu-items {
+  position: absolute; top: calc(100% + 6px); right: 0; width: min(204px, 84vw);
+  max-height: calc(100dvh - 85px); overflow-y: auto; padding: 4px; border: 1px solid #87aabc;
+  border-radius: 9px; background: #f5fbff; box-shadow: 0 8px 24px #102f4140;
+}
+.city-menu-items button {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 5px 10px;
+  border: 0; border-radius: 5px; color: #204158; background: transparent; text-align: left;
+  font: bold 14px system-ui,sans-serif; cursor: pointer;
+}
+.city-menu-items button:hover,.city-menu-items button:focus-visible { background: #dcedf7; }
+.city-menu-items .item-icon { --item-size: 25px; }
 .city-dialog { border: 2px solid #53788c; border-radius: 10px; background: #f5fbff; box-shadow: 0 8px 36px #10283e55; }
 .dialog-title { border-bottom: 2px solid #bad5e7; }
 .dialog-title h2 { font-size: 14px; line-height: 1.6; }
@@ -178,12 +193,8 @@ button.primary { background: var(--aqua); color: #fff; border: 0; }
 .mayor-services button span:last-child,.coin-pack span:last-child { margin-left: auto; }
 .mayor-services small { display: block; color: #89570c; font-size: 12px; }
 .coin-pack { background: #fff2cb; border-color: #ddbc73; }
-:where(.map-header,.map-actions,.city-dialog) :focus-visible { outline: 3px solid #197196; outline-offset: 2px; }
+:where(.map-header,.city-dialog) :focus-visible { outline: 3px solid #197196; outline-offset: 2px; }
 @media (max-width: 620px) {
   .city-brand .item-icon { --item-size: 33px; }
-  .map-actions { width: min(370px,calc(100% - 16px)); box-sizing: border-box; }
-  .map-actions button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 1px; padding: 3px 1px 6px; font-size: 11px; }
-  .map-actions .item-icon { --item-size: 26px; }
-  .map-toast { bottom: 85px; }
   .map-weather { top: 118px; }
 }

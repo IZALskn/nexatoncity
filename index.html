@@ -33,20 +33,23 @@
       <h1>Nexaton City</h1>
       <p><b id="hudCitizens">–</b> warga · <b id="hudEmpty">–</b> rumah kosong · <b id="hudIslands">1</b> pulau</p>
     </div></div>
-    <button class="tour-btn" onclick="tourResidents()">Tur warga</button>
     <form class="citizen-search" role="search" onsubmit="event.preventDefault(); searchCitizen(true)">
       <input id="searchInput" aria-label="Cari username warga" placeholder="Cari @username warga" autocomplete="off" oninput="searchCitizen()" onfocus="searchCitizen()">
       <button aria-label="Cari warga" type="submit">Cari</button>
       <div id="searchResults" class="results" hidden></div>
     </form>
+    <details id="cityMenu" class="city-menu">
+      <summary>Menu kota</summary>
+      <nav class="city-menu-items" aria-label="Menu kota">
+        <button onclick="showCityOverview()" title="Tampilkan seluruh permukiman"><span class="item-icon icon-map" aria-hidden="true"></span>Peta kota</button>
+        <button onclick="tourResidents()"><span class="item-icon icon-mayor" aria-hidden="true"></span>Tur warga</button>
+        <button onclick="openClaimModal()"><span class="item-icon icon-home" aria-hidden="true"></span>Daftar rumah</button>
+        <button onclick="openMayorDialog()"><span class="item-icon icon-hat" aria-hidden="true"></span>Wali kota</button>
+        <button onclick="document.getElementById('topupDialog').showModal()"><span class="item-icon icon-coin" aria-hidden="true"></span>Top up</button>
+      </nav>
+    </details>
   </header>
   <div class="map-weather"><span id="timeBadge"></span><span id="seasonBadge"></span><span id="biomeHud"></span></div>
-  <nav class="map-actions" aria-label="Menu kota">
-    <button onclick="showCityOverview()" title="Tampilkan seluruh permukiman"><span class="item-icon icon-map" aria-hidden="true"></span>Peta kota</button>
-    <button class="primary" onclick="openClaimModal()"><span class="item-icon icon-home" aria-hidden="true"></span>Daftar rumah</button>
-    <button onclick="openMayorDialog()"><span class="item-icon icon-hat" aria-hidden="true"></span>Wali kota</button>
-    <button onclick="document.getElementById('topupDialog').showModal()"><span class="item-icon icon-coin" aria-hidden="true"></span>Top up</button>
-  </nav>
   <div id="toastMsg" role="status" class="map-toast hidden"></div>
 
   <dialog id="mayorDialog" class="city-dialog" aria-labelledby="mayorTitle">
@@ -171,6 +174,30 @@
   </div>
 
   <!-- PANGGIL DATA WARGA LALU MESIN 3D -->
+  <script type="module">
+    const menu = document.getElementById("cityMenu");
+    const toggle = menu.querySelector("summary");
+    function closeMenu() {
+      menu.open = false;
+      toggle.focus();
+    }
+
+    // Close before the selected action runs so dialogs restore focus to the toggle.
+    menu.addEventListener("click", event => {
+      if (event.target.closest("button")) closeMenu();
+    }, true);
+    menu.addEventListener("keydown", event => {
+      if (event.key === "Escape" && menu.open) {
+        event.preventDefault();
+        closeMenu();
+      }
+    });
+    function dismissOutside(event) {
+      if (menu.open && !menu.contains(event.target)) menu.open = false;
+    }
+    document.addEventListener("pointerdown", dismissOutside);
+    document.addEventListener("focusin", dismissOutside);
+  </script>
   <script src="citizens.js"></script>
   <script src="world.js"></script>
 </body>
