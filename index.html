@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>NexatonCity - Living 3D Voxel World</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nexaton City · Peta Warga</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -23,145 +23,90 @@
   <div id="mayorBubble" class="bg-white px-3.5 py-2 rounded-2xl shadow-xl text-center min-w-[165px] max-w-[235px]" style="border: 3px solid #0f172a;">
     <div class="text-[9px] font-extrabold uppercase text-amber-600 tracking-wider">🎩 @mayorofnexatoncity</div>
     <div id="mayorSpeechText" class="text-xs font-extrabold text-slate-900 leading-snug mt-0.5">
-      "Welcome @Godkingters 2.0 to House #3! 🎉"
+      Selamat datang di Nexaton City!
     </div>
     <div class="w-3 h-3 bg-white rotate-45 mx-auto -mb-3.5 mt-1" style="border-right:3px solid #0f172a; border-bottom:3px solid #0f172a;"></div>
   </div>
 
-  <!-- TOP GAME HUD -->
-  <div class="fixed top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-    <div class="mc-panel px-3.5 py-2.5 rounded-xl text-white flex items-center gap-3 pointer-events-auto">
-      <div class="text-2xl">🎩</div>
-      <div>
-        <div class="flex items-center flex-wrap gap-1.5">
-          <h1 class="pixel-font text-xs sm:text-sm text-sky-400">NEXATON CITY</h1>
-          <span id="seasonBadge" class="bg-pink-500/20 border border-pink-400 text-pink-300 text-[10px] font-bold px-1.5 py-0.5 rounded">🌸 SAKURA</span>
-          <span id="timeBadge" class="bg-sky-500/20 border border-sky-400 text-sky-300 text-[10px] font-bold px-1.5 py-0.5 rounded">☀️ DAY</span>
-        </div>
-        <p class="text-[11px] text-slate-300 mt-1">
-          👥 Citizens: <span id="hudCitizens" class="text-emerald-400 font-bold">3</span> | 🏠 Empty: <span id="hudEmpty" class="text-white font-bold">9</span> | 🏝️ Islands: <span id="hudIslands" class="text-sky-300 font-bold">1</span> | <span id="biomeHud" class="text-amber-300 font-bold">🐰 Bunnies</span>
-        </p>
-      </div>
+  <header class="map-header">
+    <div class="city-brand"><span class="voxel-icon" aria-hidden="true"></span><div>
+      <h1>Nexaton City</h1>
+      <p><b id="hudCitizens">–</b> warga · <b id="hudEmpty">–</b> rumah kosong · <b id="hudIslands">1</b> pulau</p>
+    </div></div>
+    <button class="tour-btn" onclick="tourResidents()">Tur warga</button>
+    <form class="citizen-search" role="search" onsubmit="event.preventDefault(); searchCitizen(true)">
+      <input id="searchInput" aria-label="Cari username warga" placeholder="Cari @username warga" autocomplete="off" oninput="searchCitizen()" onfocus="searchCitizen()">
+      <button aria-label="Cari warga" type="submit">Cari</button>
+      <div id="searchResults" class="results" hidden></div>
+    </form>
+  </header>
+  <div class="map-weather"><span id="timeBadge"></span><span id="seasonBadge"></span><span id="biomeHud"></span></div>
+  <nav class="map-actions" aria-label="Menu kota">
+    <button onclick="showCityOverview()" title="Tampilkan seluruh permukiman">Peta kota</button>
+    <button class="primary" onclick="openClaimModal()">Daftar rumah</button>
+    <button onclick="document.getElementById('topupDialog').showModal()">Top up</button>
+  </nav>
+  <div id="toastMsg" role="status" class="map-toast hidden"></div>
+
+  <dialog id="claimModal" class="city-dialog" aria-labelledby="claimTitle">
+    <div class="dialog-title"><h2 id="claimTitle">Daftar rumah gratis</h2><button type="button" onclick="closeClaimModal()" aria-label="Tutup">×</button></div>
+    <form id="claimForm" onsubmit="event.preventDefault(); submitClaimHouse()">
+      <label for="claimUsernameInput">Username TikTok</label>
+      <input id="claimUsernameInput" placeholder="@namakamu" required autocomplete="off" autocapitalize="none" spellcheck="false">
+      <label for="claimPlot">Pilih rumah kosong</label>
+      <select id="claimPlot" required></select>
+      <p>Satu username mendapat satu rumah. Sudah terdaftar? Cari username untuk mengunjungi rumahmu.</p>
+      <a href="https://www.tiktok.com/@mayorofnexatoncity" target="_blank" rel="noopener noreferrer">Buka TikTok @mayorofnexatoncity ↗</a>
+      <label class="check"><input type="checkbox" required id="followConfirmCheck"> Saya sudah mengikuti akun wali kota.</label>
+      <label class="check"><input type="checkbox" id="commentConfirmCheck"> Saya juga sudah berkomentar untuk mendapat halaman dan pohon.</label>
+      <p id="claimStatus" role="status"></p>
+      <button id="claimSubmit" class="primary" type="submit">Konfirmasi rumah</button>
+    </form>
+  </dialog>
+
+  <dialog id="topupDialog" class="city-dialog" aria-labelledby="topupTitle" onclose="this.querySelector('video').pause()">
+    <div class="dialog-title"><h2 id="topupTitle">Top up kota</h2><button onclick="this.closest('dialog').close()" aria-label="Tutup">×</button></div>
+    <div class="promo-content">
+      <span class="maint-status">Dalam pemeliharaan</span>
+      <p>Top up belum dibuka. Berikut pratinjau paket koin yang sedang disiapkan.</p>
+      <div class="coin-pack"><strong>50 koin kota</strong><span>Rp5.000</span></div>
+      <small>Harga usulan selama pemeliharaan.</small>
+      <video controls playsinline preload="none" aria-label="Video promo Nexaton City" poster="promo/poster.jpg" src="promo/nexaton-city.mp4"></video>
+      <a href="https://www.tiktok.com/@mayorofnexatoncity" target="_blank" rel="noopener noreferrer">Lihat TikTok wali kota ↗</a>
     </div>
-
-    <!-- Search Citizen Input -->
-    <div class="mc-panel p-1.5 rounded-xl flex items-center gap-1.5 pointer-events-auto flex-1 max-w-xs">
-      <input
-        id="searchInput"
-        type="text"
-        placeholder="Find @Godkingters 2.0, @steve..."
-        class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg w-full border border-slate-700 focus:outline-none focus:border-sky-400"
-        onkeydown="if(event.key==='Enter') searchCitizen()"
-      />
-      <button onclick="searchCitizen()" class="mc-btn text-slate-950 font-extrabold text-xs px-3 py-2 rounded-lg shrink-0">
-        🔍
-      </button>
-    </div>
-
-    <!-- Main Actions -->
-    <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
-      <button onclick="focusCitizenById(3)" class="mc-btn text-slate-950 font-black text-xs px-3 py-2.5 rounded-xl flex items-center gap-1">
-        <span>⚡</span> <span>NEWEST: @Godkingters 2.0</span>
-      </button>
-      <button onclick="openClaimModal()" class="mc-btn-emerald text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5">
-        <span>🏠</span> <span>CLAIM FREE HOUSE</span>
-      </button>
-      <button onclick="openShopGateway()" class="mc-btn-gold text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5">
-        <span>🛒</span> <span>UPGRADE SHOP</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="toastMsg" class="fixed top-20 left-1/2 -translate-x-1/2 z-40 hidden mc-panel px-4 py-2.5 rounded-xl text-xs font-bold text-amber-300 text-center"></div>
-
-  <!-- BOTTOM INFO BAR -->
-  <div class="fixed bottom-3 left-3 right-3 z-20 flex items-end justify-between pointer-events-none">
-    <div class="mc-panel p-3 rounded-xl text-white pointer-events-auto max-w-md">
-      <div class="pixel-font text-[9px] text-emerald-400 mb-1">🌳 COMMENT REWARD UNLOCKED: @Godkingters 2.0</div>
-      <p class="text-[11px] text-slate-300 leading-relaxed">
-        <strong>@Godkingters 2.0</strong> commented on TikTok & unlocked House #3 with a custom <strong>Naoya Zenin Avatar</strong> + <strong>Free Yard, Fence & Oak Tree</strong>!
-      </p>
-    </div>
-  </div>
-
-  <!-- MODAL 1: CLAIM FREE SUBSIDIZED HOUSE -->
-  <div id="claimModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="mc-panel rounded-2xl max-w-md w-full overflow-hidden text-white shadow-2xl">
-      <div class="bg-slate-900 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">CITIZEN REGISTRATION</span>
-          <h2 class="pixel-font text-xs sm:text-sm text-white mt-1.5">CLAIM SUBSIDIZED HOUSE</h2>
-        </div>
-        <button onclick="closeClaimModal()" class="bg-rose-600 hover:bg-rose-500 text-white font-black w-8 h-8 rounded-lg border-2 border-rose-400">✕</button>
-      </div>
-
-      <div class="p-5 space-y-4">
-        <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-700 space-y-2">
-          <div class="text-xs font-extrabold text-sky-400">STEP 1: FOLLOW THE MAYOR ON TIKTOK</div>
-          <p class="text-[11px] text-slate-300">Every follower gets a free Subsidized House. Comment on TikTok to unlock a Free Yard & Oak Tree!</p>
-          <a href="https://www.tiktok.com/@mayorofnexatoncity" target="_blank" onclick="unlockClaimStep()"
-             class="mc-btn w-full py-2.5 rounded-xl text-center text-slate-950 font-black text-xs block">
-            ➕ Follow @mayorofnexatoncity on TikTok
-          </a>
-        </div>
-
-        <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-700 space-y-2.5">
-          <div class="text-xs font-extrabold text-emerald-400">STEP 2: ENTER YOUR TIKTOK USERNAME</div>
-          <input
-            id="claimUsernameInput"
-            type="text"
-            placeholder="e.g. @your_username"
-            class="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-600 focus:outline-none focus:border-emerald-400"
-          />
-          <div class="flex items-center gap-2 text-[11px] text-slate-300">
-            <input type="checkbox" id="followConfirmCheck" class="w-4 h-4 accent-emerald-500" />
-            <label for="followConfirmCheck">I have followed <strong>@mayorofnexatoncity</strong></label>
-          </div>
-          <div class="flex items-center gap-2 text-[11px] text-emerald-300 pt-1">
-            <input type="checkbox" id="commentConfirmCheck" class="w-4 h-4 accent-emerald-500" />
-            <label for="commentConfirmCheck">🌳 I also commented on TikTok (Unlock Free Yard + Fence + Tree!)</label>
-          </div>
-        </div>
-
-        <button onclick="submitClaimHouse()" class="mc-btn-emerald w-full py-3.5 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-          🏠 CONFIRM & MOVE INTO MY HOUSE!
-        </button>
-      </div>
-    </div>
-  </div>
+  </dialog>
 
   <!-- MODAL 2: SHOP GATEWAY -->
   <div id="shopModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="mc-panel rounded-2xl max-w-md w-full overflow-hidden text-white shadow-2xl">
       <div class="bg-slate-900 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
         <div>
-          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40">VIP VILLA UPGRADE</span>
-          <h2 class="pixel-font text-xs sm:text-sm text-white mt-1.5">LINK YOUR TIKTOK TO SHOP</h2>
+          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40">DEKORASI VILA</span>
+          <h2 class="pixel-font text-xs sm:text-sm text-white mt-1.5">Toko dekorasi</h2>
         </div>
         <button onclick="closeShopGateway()" class="bg-rose-600 hover:bg-rose-500 text-white font-black w-8 h-8 rounded-lg border-2 border-rose-400">✕</button>
       </div>
 
       <div class="p-5 space-y-4">
         <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-700 space-y-2.5">
-          <div class="text-xs font-extrabold text-amber-400">1. ENTER YOUR TIKTOK USERNAME FIRST</div>
+          <div class="text-xs font-extrabold text-amber-400">Username TikTok pemilik rumah</div>
           <p class="text-[11px] text-slate-300 leading-relaxed">
-            Type your TikTok <strong class="text-white">@username</strong> below. We will copy it for your Shopify <strong>Cart Note</strong> so our system upgrades your house into a <strong class="text-amber-300">2-Story VIP Cyber Villa</strong>!
+            Gunakan <strong class="text-white">@username</strong> yang terdaftar di rumah untuk memesan dekorasi vila di Shopify.
           </p>
           <input
             id="shopUsernameInput"
             type="text"
-            placeholder="e.g. @your_username"
+            placeholder="@namakamu"
             class="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-600 focus:outline-none focus:border-amber-400"
           />
         </div>
 
         <div class="bg-amber-950/40 border border-amber-500/40 p-3 rounded-xl text-[11px] text-amber-200 leading-relaxed">
-          📌 <strong>Important at Checkout:</strong> Paste your <span class="underline font-bold">@username</span> in the <strong>"Order special instructions / Cart Note"</strong> box on Shopify before paying!
+          Cantumkan <strong>@username</strong> pada kolom <strong>Cart Note</strong> saat memesan dekorasi.
         </div>
 
         <button onclick="proceedToShopify()" class="mc-btn-gold w-full py-3.5 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-          🛒 COPY USERNAME & OPEN SHOP
+          Salin username dan buka toko dekorasi
         </button>
       </div>
     </div>
@@ -172,8 +117,8 @@
     <div class="mc-panel rounded-2xl max-w-md w-full overflow-hidden text-white shadow-2xl">
       <div class="bg-slate-900 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
         <div>
-          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">3D VOXEL CUTAWAY ROOM</span>
-          <h2 id="roomTitle" class="pixel-font text-xs sm:text-sm text-white mt-1.5">SUBSIDIZED HOUSE #1</h2>
+          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">INTERIOR RUMAH</span>
+          <h2 id="roomTitle" class="pixel-font text-xs sm:text-sm text-white mt-1.5">RUMAH #1</h2>
         </div>
         <button onclick="closeInterior()" class="bg-rose-600 hover:bg-rose-500 text-white font-black w-8 h-8 rounded-lg border-2 border-rose-400">✕</button>
       </div>
@@ -181,29 +126,29 @@
       <div class="relative bg-slate-950 h-[250px] w-full">
         <div id="room3dContainer" class="w-full h-full"></div>
         <div id="roomOwnerBanner" class="absolute top-2 left-2 bg-slate-900/90 border border-slate-700 px-2.5 py-1 rounded text-[11px] text-sky-300 font-bold">
-          👤 Owner: Unclaimed
+          Pemilik belum terdaftar
         </div>
         <div id="roomYardBanner" class="absolute bottom-2 left-2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded text-[10px] text-emerald-300 font-bold">
-          🌳 Yard: Locked
+          Halaman terkunci
         </div>
         <div class="absolute bottom-2 right-2 bg-emerald-950/90 border border-emerald-600 px-2 py-0.5 rounded text-[10px] text-emerald-300 font-bold">
-          ⚡ Power: ON | 💧 Water: FULL
+          ⚡ Listrik aktif · 💧 Air tersedia
         </div>
       </div>
 
       <div class="p-4 space-y-3">
         <div class="grid grid-cols-3 gap-2 text-center text-[11px]">
           <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-700">
-            <div class="text-slate-400 text-[10px]">CITIZEN</div>
-            <div id="infoCitizen" class="font-bold text-emerald-400 mt-0.5 truncate">Empty Plot</div>
+            <div class="text-slate-400 text-[10px]">WARGA</div>
+            <div id="infoCitizen" class="font-bold text-emerald-400 mt-0.5 truncate">Rumah kosong</div>
           </div>
           <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-700">
-            <div class="text-slate-400 text-[10px]">YARD & TREE</div>
-            <div id="infoYard" class="font-bold text-sky-400 mt-0.5">Locked 🔒</div>
+            <div class="text-slate-400 text-[10px]">HALAMAN</div>
+            <div id="infoYard" class="font-bold text-sky-400 mt-0.5">Terkunci</div>
           </div>
           <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-700">
-            <div class="text-slate-400 text-[10px]">ROOM DECOR</div>
-            <div id="infoDecor" class="font-bold text-amber-400 mt-0.5">Shop Upgrade 🛍️</div>
+            <div class="text-slate-400 text-[10px]">DEKORASI</div>
+            <div id="infoDecor" class="font-bold text-amber-400 mt-0.5">Toko dekorasi</div>
           </div>
         </div>
 

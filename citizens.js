@@ -18,12 +18,10 @@ const defaultCitizens = {
 
 // Kalimat Bubble Chat Mayor
 const mayorPhrases = [
-  "\"Welcome @sealllyx (Seal) to House #4! 🦭🌳\"",
-  "\"Welcome @Jejey (Hu Tao) to House #5! 🔥👻\"",
-  "\"Welcome @Akhtar & @Care. to Houses #6 & #7! ⭐💻\"",
-  "\"Look! Citizens are sitting & eating snacks! 🍱🪑\"",
-  "\"Only 5 empty houses left on Main Island! 🚨\"",
-  "\"Shop decor to upgrade into a VIP Villa! 🏰\""
+  "Ketuk rumah untuk melihat kamar warganya.",
+  "Cari username untuk berkunjung ke rumah teman.",
+  "Pilih rumah kosong dari menu Daftar rumah.",
+  "Kunjungi halaman warga di sepanjang jalan utama."
 ];
 
 // Warna Atap 12 Rumah Subsidi (Cerah & Hidup)
@@ -72,7 +70,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const origUpdateEnv = window.updateGlobalSyncedEnvironment;
   window.updateGlobalSyncedEnvironment = function () {
-    lastAppliedSeason = -1;
     origUpdateEnv();
     if (typeof ambientLight !== "undefined") ambientLight.intensity = isNight ? 0.35 : 0.72;
     if (typeof hemiLight !== "undefined") hemiLight.intensity = isNight ? 0.22 : 0.42;
@@ -423,8 +420,13 @@ window.addEventListener("DOMContentLoaded", () => {
       ? seasons[currentSeasonIdx].id
       : "sakura";
 
+    for (let i = customAnimatedCitizens.length - 1; i >= 0; i--) {
+      if (!customAnimatedCitizens[i].parent) customAnimatedCitizens.splice(i, 1);
+    }
     customAnimatedCitizens.forEach((av) => {
       const u = av.userData;
+      av.visible = !isNight;
+      if (!av.visible) return;
       const cycleTime = (nowSec + u.phase * 3.5) % 20; // Siklus 20 detik per warga
 
       u.citizenUmbrella.visible = (activeSeasonId === "rain");
@@ -643,10 +645,10 @@ window.addEventListener("DOMContentLoaded", () => {
       customOwnerHolder.remove(customOwnerHolder.children[0]);
     }
 
-    const actionArea = document.getElementById("roomActionArea");
-    document.getElementById("infoYard").textContent = houseData.has_yard ? "Unlocked (Fence + Tree) 🌳" : "Comment on TikTok 💬";
-    document.getElementById("roomYardBanner").textContent = houseData.has_yard ? "🌳 Yard & Oak Tree: INSTALLED" : "🌳 Yard: Comment to Unlock";
-    document.getElementById("infoDecor").textContent = houseData.decor ? houseData.decor : "Gaming PC + Snack 🍱";
+    renderRoomAction(houseData);
+    document.getElementById("infoYard").textContent = houseData.has_yard ? "Pagar dan pohon" : "Komentar di TikTok";
+    document.getElementById("roomYardBanner").textContent = houseData.has_yard ? "🌳 Halaman dan pohon" : "🌳 Bonus komentar";
+    document.getElementById("infoDecor").textContent = houseData.decor ? houseData.decor : "PC dan camilan";
 
     if (houseData.owner) {
       const charInside = window.buildDetailedCharacterRig(houseData.owner, houseData.roofColor, houseData.avatarType);
@@ -656,21 +658,11 @@ window.addEventListener("DOMContentLoaded", () => {
       charInside.userData.foodProp.visible = true;
       customOwnerHolder.add(charInside);
 
-      document.getElementById("roomOwnerBanner").textContent = `👤 Citizen: ${houseData.owner}`;
+      document.getElementById("roomOwnerBanner").textContent = `👤 Warga · ${houseData.owner}`;
       document.getElementById("infoCitizen").textContent = houseData.owner;
-      actionArea.innerHTML = `
-        <button onclick="closeInterior(); openShopGateway('${houseData.owner}');"
-           class="mc-btn-gold w-full py-3 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-          🛒 BUY DECOR TO UPGRADE ${houseData.owner.toUpperCase()} TO A VILLA!
-        </button>`;
     } else {
-      document.getElementById("roomOwnerBanner").textContent = `🔑 Unclaimed Subsidized House`;
-      document.getElementById("infoCitizen").textContent = "Available (Free)";
-      actionArea.innerHTML = `
-        <button onclick="closeInterior(); openClaimModal(${houseData.id});"
-           class="mc-btn-emerald w-full py-3 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-          🏠 CLAIM THIS HOUSE FOR FREE (FOLLOW MAYOR)
-        </button>`;
+      document.getElementById("roomOwnerBanner").textContent = `🔑 Rumah belum dihuni`;
+      document.getElementById("infoCitizen").textContent = "Tersedia gratis";
     }
 
     function renderCustomRoomLoop() {
@@ -733,15 +725,4 @@ window.addEventListener("DOMContentLoaded", () => {
 
   window.refreshHousesState();
 
-  let tourIndex = 0;
-  const newCitizenIds = [4, 5, 6, 7, 3];
-  window.focusCitizenById = function () {
-    const targetId = newCitizenIds[tourIndex % newCitizenIds.length];
-    tourIndex++;
-    const h = clickableHouses.find(item => item.userData.id === targetId);
-    if (h) {
-      focusOnHouse(h);
-      showToast(`🎥 Highlighting House #${targetId}: ${h.userData.owner}! Watch them walk, sit & eat snacks!`);
-    }
-  };
 });

@@ -75,3 +75,60 @@ body, html {
   pointer-events: none;
   transform: translate(-50%, -100%);
 }
+
+/* Peta dan menu warga */
+:root { --ink: #122d32; --aqua: #17615f; --edge: #c8dcd7; }
+[hidden], .hidden { display: none !important; }
+body { color: var(--ink); }
+.map-header, .map-actions, .city-dialog { font-family: Inter, system-ui, sans-serif; }
+.map-header {
+  position: fixed; z-index: 24; inset: 12px 12px auto; margin: auto; max-width: 860px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 10px 14px; background: #f5fcf8; border: 1px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 4px 20px #12363c30;
+}
+.city-brand { display: flex; align-items: center; gap: 12px; }
+.city-brand h1 { margin: 0; font: bold 19px/1.2 system-ui,sans-serif; }
+.city-brand p { margin: 3px 0 0; color: #405e60; font-size: 12px; }
+.voxel-icon { display: block; width: 27px; height: 29px; background: linear-gradient(150deg,#a6e69d 0 32%,transparent 33%),linear-gradient(30deg,#3a8761 0 49%,#206643 50%); clip-path: polygon(50% 0,100% 24%,100% 76%,50% 100%,0 76%,0 24%); }
+.citizen-search { position: relative; display: flex; gap: 4px; width: min(310px,100%); }
+.citizen-search input, .city-dialog input:not([type=checkbox]), .city-dialog select {
+  box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid #a9c5bc; border-radius: 7px; background: white;
+  color: var(--ink); padding: 9px 10px; font: inherit; font-size: 16px; user-select: text;
+}
+.citizen-search button,.map-actions button,.city-dialog button { cursor: pointer; font: bold 14px system-ui,sans-serif; }
+.citizen-search button,.map-actions button { padding: 9px 13px; border-radius: 7px; border: 0; background: #e1efe9; color: var(--ink); }
+.results { position: absolute; z-index: 2; top: calc(100% + 5px); right: 0; left: 0; max-height: 32vh; overflow: auto; background: #fff; border: 1px solid var(--edge); border-radius: 8px; box-shadow: 0 8px 16px #14322533; }
+.results button,.results p { display: block; padding: 10px; font-size: 13px; margin: 0; }
+.results button { width: 100%; text-align: left; background: #fff; }
+.results button:hover,.results button:focus-visible { background: #dff2e8; }
+.map-weather,.map-actions,.map-toast { position: fixed; z-index: 20; left: 50%; transform: translateX(-50%); }
+.map-weather { top: 84px; display: flex; white-space: nowrap; gap: 10px; padding: 5px 10px; border-radius: 20px; font: bold 10px system-ui; color: white; background: #183a40cf; pointer-events: none; }
+.map-actions { bottom: max(14px,env(safe-area-inset-bottom)); display: flex; white-space: nowrap; gap: 5px; background: #f5fcf8; padding: 5px; border-radius: 10px; box-shadow: 0 4px 20px #12363c40; }
+button.primary { background: var(--aqua); color: #fff; border: 0; }
+.map-toast { bottom: 75px; width: max-content; max-width: 90vw; border-radius: 8px; padding: 10px 16px; background: #142f34; color: white; font-size: 13px; text-align: center; }
+.city-dialog { box-sizing: border-box; padding: 0; margin: auto; border: 1px solid var(--edge); width: min(410px,calc(100% - 24px)); max-height: 86dvh; overflow: auto; border-radius: 14px; background: #f7fcf9; color: var(--ink); }
+.city-dialog::backdrop { background: #09272abd; }
+.dialog-title,.coin-pack { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dialog-title { padding: 15px 18px; border-bottom: 1px solid var(--edge); }
+.dialog-title h2 { margin: 0; font: bold 20px system-ui; }
+.dialog-title button { border: 0; border-radius: 50%; width: 34px; height: 34px; background: #e2ece7; font-size: 20px; }
+.city-dialog form,.promo-content { display: grid; gap: 10px; padding: 18px; }
+.city-dialog label { font-size: 14px; font-weight: 700; }
+.city-dialog p,.city-dialog small,.city-dialog .check { margin: 0; font: 14px/1.45 system-ui; }
+.city-dialog a { font-weight: 700; color: #125954; text-decoration: underline; }
+.city-dialog .check { display: flex; gap: 8px; align-items: baseline; }
+#claimSubmit { padding: 12px; border-radius: 7px; }
+#claimSubmit:disabled { opacity: .6; }
+#claimStatus { color: #923d18; }
+.maint-status { width: fit-content; background: #fae6b9; color: #744709; border-radius: 5px; padding: 4px 8px; font: bold 12px system-ui; }
+.coin-pack { background: #e2f1ea; padding: 12px; border-radius: 7px; }
+.promo-content video { display: block; width: auto; height: min(33vh,280px); max-width: 100%; background: #172f35; border-radius: 8px; justify-self: center; }
+.house-label { white-space: nowrap; }
+@media(max-width:620px) {
+  .map-header { flex-wrap: wrap; gap: 7px; padding: 8px 10px; inset: 6px 8px auto; }
+  .citizen-search { width: 100%; }
+  .map-weather { top: 112px; }
+  #mayorBubble { display: none; }
+}
+.tour-btn { margin-left: auto; color: #175c54; padding: 6px 9px; font: bold 13px system-ui; border: 1px solid var(--edge); border-radius: 6px; background: white; cursor: pointer; }

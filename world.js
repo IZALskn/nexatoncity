@@ -94,7 +94,8 @@ let bananaPeelMesh = null;
 let tick = 0;
 let isNight = false;
 let currentSeasonIdx = 0;
-let preselectedHouseId = null;
+let overviewActive = true;
+controls.addEventListener("start", () => { overviewActive = false; });
 let spawnedExpansionIslands = 0;
 
 function createBlock(w, h, d, hexColor, x, y, z, cast = true, receive = true) {
@@ -137,7 +138,7 @@ function createSingleHousePlot(houseId, x, z, rot) {
   const roofCol = houseColors[(houseId - 1) % houseColors.length];
 
   hGroup.add(createBlock(5.6, 0.2, 5.6, 0xcbd5e1, 0, 0.1, 0));
-  hGroup.add(createBlock(1.2, 0.15, 2.4, 0x94a3b8, 0, 0.08, 3.4));
+  hGroup.add(createBlock(1.2, 0.15, 4.4, 0x94a3b8, 0, 0.08, 4.1));
 
   const yardGroup = new THREE.Group();
   yardGroup.add(createBlock(5.8, 0.24, 6.2, 0x4ade80, 0, 0.12, 0.4, false, true));
@@ -181,6 +182,7 @@ function createSingleHousePlot(houseId, x, z, rot) {
   [-1.25, 1.25].forEach(wx => {
     const win = createBlock(0.85, 0.85, 0.15, 0xbae6fd, wx, 1.5, 1.92);
     subMesh.add(win);
+    win.material.userData.home = hGroup;
     nightWindows.push(win.material);
     subMesh.add(createBlock(0.95, 0.25, 0.35, 0x9a3412, wx, 0.95, 2.05));
     subMesh.add(createBlock(0.75, 0.25, 0.25, 0x16a34a, wx, 1.15, 2.05));
@@ -193,17 +195,18 @@ function createSingleHousePlot(houseId, x, z, rot) {
   villaMesh.add(createBlock(3.8, 0.35, 3.8, 0xf59e0b, -0.7, 5.05, -0.2));
   const glassBalcony = createBlock(2.8, 1.5, 0.2, 0x38bdf8, -0.7, 3.7, 1.45);
   villaMesh.add(glassBalcony);
+  glassBalcony.material.userData.home = hGroup;
   nightWindows.push(glassBalcony.material);
   villaMesh.add(createBlock(1.6, 0.35, 3.2, 0x0ea5e9, 1.65, 0.22, 0.2));
   villaMesh.visible = false;
   hGroup.add(villaMesh);
 
   for (let s = 0; s < 3; s++) {
-    const puff = createBlock(0.45, 0.45, 0.45, 0xf1f5f9, x + 1.35, 4.9 + s * 0.8, z - 0.8, false, false);
+    const puff = createBlock(0.45, 0.45, 0.45, 0xf1f5f9, 1.35, 4.9 + s * 0.8, -0.8, false, false);
     puff.material.transparent = true;
     puff.material.opacity = 0.75;
-    puff.userData = { baseX: x + 1.35, baseZ: z - 0.8, offset: s * 2.1 + houseId };
-    cityGroup.add(puff);
+    puff.userData = { baseX: 1.35, house: hGroup, offset: s * 2.1 + houseId };
+    subMesh.add(puff);
     smokeParticles.push(puff);
   }
 
@@ -216,7 +219,7 @@ function createSingleHousePlot(houseId, x, z, rot) {
 
   hGroup.userData = {
     id: houseId,
-    name: `House #${houseId}`,
+    name: `Rumah #${houseId}`,
     roofColor: roofCol,
     owner: null,
     tier: "subsidized",
@@ -406,7 +409,7 @@ function buildSeasonalBiomes() {
     seasonalAnimals.push(duck);
   });
 
-  const picnicSpots = [[-6.5, 8.0], [6.5, -8.0], [-14.2, -5.8], [-14.2, -14.8]];
+  const picnicSpots = [[-6.5, 8.0], [6.5, -8.0], [-22, -16], [-14.2, -14.8]];
   picnicSpots.forEach(([px, pz]) => {
     const pic = new THREE.Group();
     pic.add(createBlock(2.2, 0.06, 2.2, 0xf43f5e, 0, 0.04, 0));
@@ -501,8 +504,7 @@ function buildSeasonalBiomes() {
 const expansionDirections = [
   {
     islandX: 0, islandZ: 56, width: 28, depth: 24,
-    bridgeX: 0, bridgeZ: 41.5, bridgeW: 4.6, bridgeD: 9.0,
-    roadW: 4.0, roadD: 22,
+    roadW: 4.0, roadD: 24,
     plots: [
       { dx: -7.5, dz: -5, rot: Math.PI / 2 },
       { dx: -7.5, dz: 5, rot: Math.PI / 2 },
@@ -512,8 +514,7 @@ const expansionDirections = [
   },
   {
     islandX: -56, islandZ: 0, width: 24, depth: 28,
-    bridgeX: -41.5, bridgeZ: 0, bridgeW: 9.0, bridgeD: 4.6,
-    roadW: 22, roadD: 4.0,
+    roadW: 24, roadD: 4.0,
     plots: [
       { dx: -5, dz: -7.5, rot: 0 },
       { dx: 5, dz: -7.5, rot: 0 },
@@ -523,8 +524,7 @@ const expansionDirections = [
   },
   {
     islandX: 56, islandZ: 0, width: 24, depth: 28,
-    bridgeX: 41.5, bridgeZ: 0, bridgeW: 9.0, bridgeD: 4.6,
-    roadW: 22, roadD: 4.0,
+    roadW: 24, roadD: 4.0,
     plots: [
       { dx: -5, dz: -7.5, rot: 0 },
       { dx: 5, dz: -7.5, rot: 0 },
@@ -541,14 +541,20 @@ function spawnNextExpansionIsland() {
 
   const ix = cfg.islandX * ringMultiplier;
   const iz = cfg.islandZ * ringMultiplier;
-  const bx = cfg.bridgeX * ringMultiplier;
-  const bz = cfg.bridgeZ * ringMultiplier;
-
+  const alongZ = cfg.islandZ !== 0;
+  const direction = Math.sign(cfg.islandZ || cfg.islandX);
+  const halfIsland = (alongZ ? cfg.depth : cfg.width) / 2;
+  const previousEdge = ringMultiplier === 1 ? 38 : 56 * (ringMultiplier - 1) + halfIsland;
+  const nearEdge = 56 * ringMultiplier - halfIsland;
+  const span = nearEdge - previousEdge;
+  const center = direction * (nearEdge + previousEdge) / 2;
   const bridge = new THREE.Group();
-  bridge.add(createBlock(cfg.bridgeW, 0.35, cfg.bridgeD, 0x92400e, 0, 0.05, 0));
-  bridge.add(createBlock(cfg.bridgeW, 0.6, 0.25, 0x475569, 0, 0.45, cfg.bridgeD / 2 - 0.15));
-  bridge.add(createBlock(cfg.bridgeW, 0.6, 0.25, 0x475569, 0, 0.45, -cfg.bridgeD / 2 + 0.15));
-  bridge.position.set(bx, 0, bz);
+  bridge.add(createBlock(4.6, 0.35, span, 0x92400e, 0, 0.05, 0));
+  for (const side of [-1, 1]) {
+    bridge.add(createBlock(0.22, 0.6, span, 0x475569, side * 2.2, 0.45, 0));
+  }
+  bridge.rotation.y = alongZ ? 0 : Math.PI / 2;
+  bridge.position.set(alongZ ? 0 : center, 0, alongZ ? center : 0);
   cityGroup.add(bridge);
 
   buildFloatingIslandBase(cfg.width, cfg.depth, ix, iz);
@@ -817,10 +823,8 @@ function spawnClouds() {
 }
 
 const initialHouseCoords = [
-  { x: -12, z: -9, rot: 0 }, { x: -20, z: -9, rot: 0 }, { x: -12, z: -18, rot: 0 },
-  { x: 12, z: -9, rot: 0 },  { x: 20, z: -9, rot: 0 },  { x: 12, z: -18, rot: 0 },
-  { x: -12, z: 9, rot: Math.PI }, { x: -20, z: 9, rot: Math.PI }, { x: -12, z: 18, rot: Math.PI },
-  { x: 12, z: 9, rot: Math.PI },  { x: 20, z: 9, rot: Math.PI },  { x: 12, z: 18, rot: Math.PI }
+  ...[-14, -23, -32, 14, 23, 32].map(x => ({ x, z: -8.3, rot: 0 })),
+  ...[-14, -23, -32, 14, 23, 32].map(x => ({ x, z: 8.3, rot: Math.PI }))
 ];
 
 function buildWorld() {
@@ -833,7 +837,7 @@ function buildWorld() {
   busStop.add(createBlock(0.2, 2.2, 0.2, 0x1e293b, 1.4, 1.1, -0.6));
   busStop.add(createBlock(3.4, 0.25, 1.8, 0x0284c7, 0, 2.25, 0));
   busStop.add(createBlock(1.8, 0.4, 0.5, 0xd97706, 0, 0.4, -0.3));
-  busStop.position.set(-14.5, 0, -3.6);
+  busStop.position.set(-19, 0, -3.6);
   cityGroup.add(busStop);
 
   const fountain = new THREE.Group();
@@ -890,8 +894,8 @@ function buildWorld() {
 
   const oakLocations = [
     [-5.8, -5.8], [5.8, -5.8], [-5.8, 5.8], [5.8, 5.8],
-    [-8, -9], [-16, -9], [-25, -9], [8, -9], [16, -9], [25, -9],
-    [-8, 9], [-16, 9], [-25, 9], [8, 9], [16, 9], [25, 9],
+    [-19, -13], [-28, -14], [19, -13], [28, -14],
+    [-19, 13], [-28, 14], [19, 13], [28, 14],
     [-16, -18], [16, -18], [-16, 18], [16, 18]
   ];
   oakLocations.forEach(([ox, oz], i) => createOakTree(ox, oz, 0.85 + (i % 3) * 0.15));
@@ -1027,14 +1031,23 @@ const seasons = [
 let lastAppliedSeason = -1;
 let lastAppliedNight = null;
 
+function updateWindowLights() {
+  for (const mat of nightWindows) {
+    const home = mat.userData.home;
+    const lit = isNight && (!home || Boolean(home.userData.owner));
+    mat.color.setHex(lit ? 0xfef08a : 0xbae6fd);
+    if (mat.emissive) mat.emissive.setHex(lit ? 0xfacc15 : 0);
+    mat.emissiveIntensity = lit ? 0.85 : 0;
+  }
+}
+
 function updateGlobalSyncedEnvironment() {
   const nowMs = Date.now();
   const SEASON_DURATION_MS = 48 * 60 * 60 * 1000;
-  const DAY_NIGHT_CYCLE_MS = 24 * 60 * 60 * 1000;
+  const hourWIB = (new Date(nowMs).getUTCHours() + 7) % 24;
 
   const syncedSeasonIdx = Math.floor(nowMs / SEASON_DURATION_MS) % seasons.length;
-  const cycleProgress = (nowMs % DAY_NIGHT_CYCLE_MS) / DAY_NIGHT_CYCLE_MS;
-  const syncedIsNight = cycleProgress >= 0.5;
+  const syncedIsNight = hourWIB < 6 || hourWIB >= 18;
 
   if (syncedSeasonIdx !== lastAppliedSeason || syncedIsNight !== lastAppliedNight) {
     lastAppliedSeason = syncedSeasonIdx;
@@ -1044,7 +1057,7 @@ function updateGlobalSyncedEnvironment() {
 
     const s = seasons[currentSeasonIdx];
     document.getElementById("seasonBadge").textContent = s.badge;
-    document.getElementById("timeBadge").textContent = isNight ? "🌙 NIGHT" : "☀️ DAY";
+    document.getElementById("timeBadge").textContent = isNight ? "☾ Malam WIB" : "☀ Siang WIB";
     document.getElementById("biomeHud").textContent = s.biomeLabel;
 
     Object.keys(seasonGroups).forEach(k => {
@@ -1077,11 +1090,7 @@ function updateGlobalSyncedEnvironment() {
     firefliesList.forEach(f => { f.visible = isNight; });
     owlsList.forEach(o => { o.visible = isNight; });
 
-    nightWindows.forEach(mat => {
-      mat.color.setHex(isNight ? 0xfef08a : 0xbae6fd);
-      mat.emissive = new THREE.Color(isNight ? 0xfacc15 : 0x000000);
-      mat.emissiveIntensity = isNight ? 0.85 : 0;
-    });
+    updateWindowLights();
 
     weatherDrops.forEach(drop => {
       drop.visible = s.showParticles;
@@ -1095,17 +1104,25 @@ updateGlobalSyncedEnvironment();
 
 let claimedData = { ...defaultCitizens };
 
-const localSaved = JSON.parse(localStorage.getItem("nexaton_citizens_v3") || "{}");
+let localSaved = {};
+try {
+  localSaved = JSON.parse(localStorage.getItem("nexaton_citizens_v3") || "{}") || {};
+} catch (err) {
+  console.warn("Cache warga tidak tersedia.", err);
+}
 Object.keys(localSaved).forEach(k => {
-  if (!defaultCitizens[k]) claimedData[k] = localSaved[k];
+  if (Number.isSafeInteger(Number(k)) && Number(k) > 0 && !defaultCitizens[k]) claimedData[k] = localSaved[k];
 });
 
+let citySynced = false;
 async function loadCitizensData() {
   if (supabaseClient) {
     try {
       const { data, error } = await supabaseClient.from("citizens").select("*");
       if (!error && data) {
+        citySynced = true;
         data.forEach(row => {
+          if (!Number.isSafeInteger(row.house_id) || row.house_id < 1 || !row.username) return;
           const def = defaultCitizens[row.house_id];
           claimedData[row.house_id] = {
             username: def ? def.username : row.username,
@@ -1129,7 +1146,7 @@ function refreshHousesState() {
   const claimedIds = Object.keys(claimedData).map(Number);
   const maxClaimedId = claimedIds.length > 0 ? Math.max(...claimedIds) : 3;
 
-  while (clickableHouses.length <= maxClaimedId || clickableHouses.filter(h => !claimedData[h.userData.id]).length === 0) {
+  while (clickableHouses.length < maxClaimedId || clickableHouses.filter(h => !claimedData[h.userData.id]).length === 0) {
     spawnNextExpansionIsland();
   }
 
@@ -1142,6 +1159,10 @@ function refreshHousesState() {
     const hasYard = entry && entry.has_yard ? true : false;
     const avatarType = entry && entry.avatar ? entry.avatar : "citizen";
 
+    if (h.userData.avatarMesh && h.userData.owner !== owner) {
+      h.remove(h.userData.avatarMesh);
+      h.userData.avatarMesh = null;
+    }
     h.userData.owner = owner;
     h.userData.tier = tier;
     h.userData.decor = decor;
@@ -1178,11 +1199,12 @@ function refreshHousesState() {
         lbl.className = "house-label bg-emerald-500 text-slate-950 border-slate-900 px-2 py-0.5 rounded-md text-[10px] font-black shadow-md";
       }
     } else {
-      lbl.textContent = `Plot #${h.userData.id} (FREE)`;
+      lbl.textContent = `Rumah #${h.userData.id} · Kosong`;
       lbl.className = "house-label bg-slate-900/80 text-slate-200 border-slate-600 px-2 py-0.5 rounded text-[9px] font-bold";
     }
   });
 
+  updateWindowLights();
   document.getElementById("hudCitizens").textContent = claimedCount;
   document.getElementById("hudEmpty").textContent = clickableHouses.length - claimedCount;
 }
@@ -1196,21 +1218,30 @@ function showToast(msg) {
   setTimeout(() => t.classList.add("hidden"), 4500);
 }
 
-function focusCitizenById(hid) {
-  const h = clickableHouses.find(item => item.userData.id === hid);
-  if (h) {
-    focusOnHouse(h);
-    showToast(`⚡ Zoomed to ${h.userData.owner} at House #${hid}!`);
-  }
+function populatePlotChoices(selectedId) {
+  const select = document.getElementById("claimPlot");
+  const empty = clickableHouses.filter(h => !h.userData.owner);
+  select.replaceChildren(new Option("Pilih nomor rumah", ""));
+  empty.forEach(({ userData: { id } }) => {
+    const district = id <= initialHouseCoords.length ? "Pulau utama" : `Pulau ${2 + Math.floor((id - initialHouseCoords.length - 1) / 4)}`;
+    select.add(new Option(`Rumah #${id} · ${district}`, id));
+  });
+  select.value = empty.some(h => h.userData.id === selectedId) ? String(selectedId) : "";
 }
 
 function openClaimModal(specificHouseId = null) {
-  preselectedHouseId = specificHouseId;
-  document.getElementById("claimModal").classList.remove("hidden");
+  document.getElementById("claimForm").reset();
+  populatePlotChoices(specificHouseId);
+  document.getElementById("claimStatus").textContent = "";
+  document.getElementById("claimModal").showModal();
 }
 
-function closeClaimModal() { document.getElementById("claimModal").classList.add("hidden"); }
-function unlockClaimStep() { document.getElementById("followConfirmCheck").checked = true; }
+function closeClaimModal() {
+  if (!document.getElementById("claimSubmit").disabled) document.getElementById("claimModal").close();
+}
+document.getElementById("claimModal").addEventListener("cancel", event => {
+  if (document.getElementById("claimSubmit").disabled) event.preventDefault();
+});
 
 function openShopGateway(prefillUsername = "") {
   if (prefillUsername) document.getElementById("shopUsernameInput").value = prefillUsername;
@@ -1234,67 +1265,147 @@ function proceedToShopify() {
 }
 
 async function submitClaimHouse() {
-  let rawUser = document.getElementById("claimUsernameInput").value.trim();
-  const isChecked = document.getElementById("followConfirmCheck").checked;
-  const hasCommented = document.getElementById("commentConfirmCheck").checked;
-
-  if (!rawUser) { showToast("⚠️ Please enter your TikTok @username!"); return; }
-  if (!isChecked) { showToast("⚠️ Please follow @mayorofnexatoncity first!"); return; }
-  if (!rawUser.startsWith("@")) rawUser = "@" + rawUser;
-
-  const existingHouse = clickableHouses.find(h => h.userData.owner && h.userData.owner.toLowerCase() === rawUser.toLowerCase());
-  if (existingHouse) {
-    if (hasCommented) {
-      claimedData[existingHouse.userData.id].has_yard = true;
-      localStorage.setItem("nexaton_citizens_v3", JSON.stringify(claimedData));
-      refreshHousesState();
-    }
-    closeClaimModal();
-    focusOnHouse(existingHouse);
-    showToast(`🎉 Welcome back ${rawUser}! Taking you to House #${existingHouse.userData.id}.`);
+  const button = document.getElementById("claimSubmit");
+  if (button.disabled) return;
+  const status = document.getElementById("claimStatus");
+  const username = usernameKey(document.getElementById("claimUsernameInput").value);
+  const hid = Number(document.getElementById("claimPlot").value);
+  if (!username) {
+    status.textContent = "Masukkan username TikTok kamu.";
     return;
   }
-
-  let targetHouse = preselectedHouseId
-    ? clickableHouses.find(h => h.userData.id === preselectedHouseId && !h.userData.owner)
-    : null;
-  if (!targetHouse) targetHouse = clickableHouses.find(h => !h.userData.owner);
-
-  if (!targetHouse) {
-    spawnNextExpansionIsland();
-    targetHouse = clickableHouses.find(h => !h.userData.owner);
+  if (!document.getElementById("followConfirmCheck").checked || !hid) return;
+  const existing = clickableHouses.find(h => h.userData.owner && usernameKey(h.userData.owner) === username);
+  if (existing) {
+    closeClaimModal();
+    visitHouse(existing);
+    return;
   }
-
-  const hid = targetHouse.userData.id;
-  claimedData[hid] = { username: rawUser, tier: "subsidized", decor: null, has_yard: hasCommented, avatar: "citizen" };
-  localStorage.setItem("nexaton_citizens_v3", JSON.stringify(claimedData));
-
-  if (supabaseClient) {
-    try { await supabaseClient.from("citizens").upsert({ house_id: hid, username: rawUser }); } catch (e) {}
+  if (!/^[a-z0-9._]{1,24}$/.test(username) || username.endsWith(".")) {
+    status.textContent = "Gunakan maksimal 24 huruf, angka, titik, atau garis bawah. Titik tidak boleh di akhir.";
+    return;
   }
-
-  refreshHousesState();
-  closeClaimModal();
-  focusOnHouse(targetHouse);
-  showToast(`🎉 Congratulations ${rawUser}! You now own Subsidized House #${hid}!`);
+  const target = clickableHouses.find(h => h.userData.id === hid);
+  if (!target || target.userData.owner) {
+    populatePlotChoices();
+    status.textContent = "Rumah itu sudah terisi. Pilih rumah kosong lain.";
+    return;
+  }
+  const owner = "@" + username;
+  const yard = document.getElementById("commentConfirmCheck").checked;
+  button.disabled = true;
+  status.textContent = "Mendaftarkan rumah…";
+  try {
+    if (!citySynced) await loadCitizensData();
+    if (!citySynced || !supabaseClient) throw new Error("offline");
+    const record = { house_id: hid, username: owner };
+    if (yard) record.has_yard = true;
+    const { error } = await supabaseClient.from("citizens").insert(record);
+    if (error) {
+      if (error.code === "23505") {
+        await loadCitizensData();
+        populatePlotChoices();
+        status.textContent = "Rumah atau username sudah terdaftar. Cari username atau pilih rumah lain.";
+        return;
+      }
+      throw error;
+    }
+    claimedData[hid] = { username: owner, tier: "subsidized", has_yard: yard, avatar: "citizen" };
+    try { localStorage.setItem("nexaton_citizens_v3", JSON.stringify(claimedData)); } catch (_) { /* Cache opsional. */ }
+    refreshHousesState();
+    document.getElementById("claimModal").close();
+    focusOnHouse(target);
+    showToast(`Selamat datang, ${owner}! Rumah #${hid} sudah terdaftar.`);
+  } catch (err) {
+    status.textContent = "Pendaftaran belum terkonfirmasi. Cek koneksi lalu coba lagi.";
+  } finally {
+    button.disabled = false;
+  }
 }
 
-function focusOnHouse(houseGroup) {
-  controls.target.set(houseGroup.position.x, 1.5, houseGroup.position.z);
-  camera.position.set(houseGroup.position.x, 14, houseGroup.position.z + 16);
+function showCityOverview() {
+  overviewActive = true;
+  // On narrow screens look down the street and fit the lots inside the HUD.
+  const direction = (camera.aspect < 1 ? new THREE.Vector3(1.3, 1.2, 0.55) : new THREE.Vector3(0.4, 1, 1)).normalize();
+  const right = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+  const up = new THREE.Vector3().crossVectors(direction, right);
+  const halfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  controls.target.set(0, 2, 0);
+  let distance = 45;
+  for (const x of [-35, 35]) {
+    for (const z of [-13, 13]) {
+      for (const y of [-2, 4]) {
+        const corner = new THREE.Vector3(x, y, z);
+        const lateral = Math.abs(corner.dot(right)) / (halfFov * camera.aspect * 0.92);
+        const vertical = Math.abs(corner.dot(up)) / (halfFov * 0.65);
+        distance = Math.max(distance, corner.dot(direction) + Math.max(lateral, vertical));
+      }
+    }
+  }
+  controls.maxDistance = Math.max(160, distance * 1.15);
+  camera.position.copy(controls.target).addScaledVector(direction, distance);
+  controls.update();
 }
 
-function searchCitizen() {
-  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+function focusOnHouse(house) {
+  overviewActive = false;
+  controls.target.copy(house.position);
+  controls.target.y = 2;
+  const offset = new THREE.Vector3(6, 8, 11).applyAxisAngle(new THREE.Vector3(0, 1, 0), house.rotation.y);
+  camera.position.copy(controls.target).addScaledVector(offset, Math.max(1, 0.65 / camera.aspect));
+  controls.update();
+}
+
+let tourIndex = 0;
+function tourResidents() {
+  const residents = clickableHouses.filter(house => house.userData.owner);
+  if (residents.length) visitHouse(residents[tourIndex++ % residents.length]);
+}
+
+function usernameKey(value) {
+  return value.trim().replace(/^@/, "").toLowerCase();
+}
+
+function visitHouse(house) {
+  document.getElementById("searchResults").hidden = true;
+  document.getElementById("searchInput").blur();
+  focusOnHouse(house);
+  showToast(`${house.userData.owner} · Rumah #${house.userData.id}`);
+}
+
+function searchCitizen(submitted = false) {
+  const q = usernameKey(document.getElementById("searchInput").value);
+  const results = document.getElementById("searchResults");
+  results.replaceChildren();
+  results.hidden = !q;
   if (!q) return;
-  const found = clickableHouses.find(h => h.userData.owner && h.userData.owner.toLowerCase().includes(q));
-  if (found) {
-    focusOnHouse(found);
-    showToast(`📍 Found ${found.userData.owner} at House #${found.userData.id}!`);
-  } else {
-    showToast(`Citizen "${q}" doesn't have a house yet! Click CLAIM FREE HOUSE to move in.`);
+  const matches = clickableHouses.filter(h => h.userData.owner && usernameKey(h.userData.owner).includes(q));
+  const exact = matches.find(h => usernameKey(h.userData.owner) === q);
+  if (submitted && (exact || matches.length === 1)) return visitHouse(exact || matches[0]);
+  for (const house of matches) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = `${house.userData.owner} · Rumah #${house.userData.id}`;
+    btn.onclick = () => visitHouse(house);
+    results.append(btn);
+  }
+  if (!matches.length) {
+    const msg = document.createElement("p");
+    msg.textContent = "Belum ada warga dengan username itu.";
+    results.append(msg);
   }
 }
+
+const searchForm = document.querySelector(".citizen-search");
+searchForm.addEventListener("keydown", event => {
+  if (event.key === "Escape") document.getElementById("searchResults").hidden = true;
+});
+document.addEventListener("focusin", event => {
+  if (!searchForm.contains(event.target)) document.getElementById("searchResults").hidden = true;
+});
+document.addEventListener("pointerdown", event => {
+  if (!searchForm.contains(event.target)) document.getElementById("searchResults").hidden = true;
+});
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
@@ -1365,6 +1476,18 @@ function initRoom3D() {
   roomScene.add(roomCitizenMesh);
 }
 
+function renderRoomAction(house) {
+  const button = document.createElement("button");
+  button.className = (house.owner ? "mc-btn-gold" : "mc-btn-emerald") + " w-full py-3 rounded-xl text-slate-950 font-black text-sm";
+  button.textContent = house.owner ? "Toko dekorasi vila" : `Daftar rumah #${house.id} gratis`;
+  button.onclick = () => {
+    closeInterior();
+    if (house.owner) openShopGateway(house.owner);
+    else openClaimModal(house.id);
+  };
+  document.getElementById("roomActionArea").replaceChildren(button);
+}
+
 function open3DInterior(houseData) {
   document.getElementById("roomTitle").textContent = `${houseData.name.toUpperCase()}`;
   document.getElementById("interiorModal").classList.remove("hidden");
@@ -1372,29 +1495,19 @@ function open3DInterior(houseData) {
   if (!roomRenderer) initRoom3D();
   roomBedBlanket.material.color.setHex(houseData.roofColor);
 
-  const actionArea = document.getElementById("roomActionArea");
-  document.getElementById("infoYard").textContent = houseData.has_yard ? "Unlocked (Fence + Tree) 🌳" : "Comment on TikTok 💬";
-  document.getElementById("roomYardBanner").textContent = houseData.has_yard ? "🌳 Yard & Oak Tree: INSTALLED" : "🌳 Yard: Comment to Unlock";
-  document.getElementById("infoDecor").textContent = houseData.decor ? houseData.decor : "Shop Upgrade 🛍️";
+  renderRoomAction(houseData);
+  document.getElementById("infoYard").textContent = houseData.has_yard ? "Pagar dan pohon" : "Komentar di TikTok";
+  document.getElementById("roomYardBanner").textContent = houseData.has_yard ? "🌳 Halaman dan pohon" : "🌳 Bonus komentar";
+  document.getElementById("infoDecor").textContent = houseData.decor ? houseData.decor : "Toko dekorasi";
 
   if (houseData.owner) {
     roomCitizenMesh.visible = true;
-    document.getElementById("roomOwnerBanner").textContent = `👤 Citizen: ${houseData.owner}`;
+    document.getElementById("roomOwnerBanner").textContent = `👤 Warga · ${houseData.owner}`;
     document.getElementById("infoCitizen").textContent = houseData.owner;
-    actionArea.innerHTML = `
-      <button onclick="closeInterior(); openShopGateway('${houseData.owner}');"
-         class="mc-btn-gold w-full py-3 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-        🛒 BUY DECOR TO UPGRADE ${houseData.owner.toUpperCase()} TO A VILLA!
-      </button>`;
   } else {
     roomCitizenMesh.visible = false;
-    document.getElementById("roomOwnerBanner").textContent = `🔑 Unclaimed Subsidized House`;
-    document.getElementById("infoCitizen").textContent = "Available (Free)";
-    actionArea.innerHTML = `
-      <button onclick="closeInterior(); openClaimModal(${houseData.id});"
-         class="mc-btn-emerald w-full py-3 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-        🏠 CLAIM THIS HOUSE FOR FREE (FOLLOW MAYOR)
-      </button>`;
+    document.getElementById("roomOwnerBanner").textContent = `🔑 Rumah belum dihuni`;
+    document.getElementById("infoCitizen").textContent = "Tersedia gratis";
   }
 
   function renderRoomLoop() {
@@ -1417,10 +1530,18 @@ function closeInterior() {
 const bubbleEl = document.getElementById("mayorBubble");
 const speechTextEl = document.getElementById("mayorSpeechText");
 
+function openLinkedTopup() {
+  const dialog = document.getElementById("topupDialog");
+  if (window.location.hash === "#topup" && !dialog.open) dialog.showModal();
+}
+window.addEventListener("hashchange", openLinkedTopup);
+openLinkedTopup();
+showCityOverview();
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  if (overviewActive) showCityOverview();
 });
 
 function animate() {
@@ -1568,6 +1689,8 @@ function animate() {
   });
 
   smokeParticles.forEach(p => {
+    p.visible = Boolean(p.userData.house.userData.owner);
+    if (!p.visible) return;
     const cycle = ((tick * 0.025 + p.userData.offset) % 2.8);
     p.position.y = 4.8 + cycle;
     p.position.x = p.userData.baseX + Math.sin(tick * 0.04 + p.userData.offset) * 0.2;
@@ -1643,7 +1766,7 @@ function animate() {
 
     const headPos = new THREE.Vector3(mayorGroup.position.x, 4.3, mayorGroup.position.z);
     headPos.project(camera);
-    if (headPos.z < 1) {
+    if (headPos.z > -1 && headPos.z < 1 && camera.position.distanceTo(mayorGroup.position) < 40) {
       bubbleEl.style.left = `${(headPos.x * 0.5 + 0.5) * window.innerWidth}px`;
       bubbleEl.style.top = `${(-(headPos.y * 0.5) + 0.5) * window.innerHeight}px`;
       bubbleEl.style.opacity = "1";
@@ -1655,7 +1778,7 @@ function animate() {
   clickableHouses.forEach(h => {
     const pos = new THREE.Vector3(h.position.x, 5.2, h.position.z);
     pos.project(camera);
-    if (pos.z < 1) {
+    if (pos.z > -1 && pos.z < 1 && Math.abs(pos.x) < 0.96 && Math.abs(pos.y) < 0.95 && camera.position.distanceTo(h.position) < 45) {
       h.userData.labelEl.style.left = `${(pos.x * 0.5 + 0.5) * window.innerWidth}px`;
       h.userData.labelEl.style.top = `${(-(pos.y * 0.5) + 0.5) * window.innerHeight}px`;
       h.userData.labelEl.style.opacity = "1";
