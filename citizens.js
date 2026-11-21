@@ -248,36 +248,116 @@ window.addEventListener("DOMContentLoaded", () => {
       rigRoot.add(boo);
 
     } else if (avatarType === "till") {
-      const skin = 0xf2d9cd, hair = 0x9caaaf, shirt = 0xe8e6e1;
-      for (const leg of [legL, legR]) {
-        leg.add(part(0.32, 0.52, 0.34, 0xa8323d, 0, -0.26, 0));
-        leg.add(part(0.34, 0.16, 0.42, 0x292b30, 0, -0.58, 0.04));
+      // Blink Gone stage costume. Work in sRGB swatches for the city's sRGB renderer.
+      const ink = 0x1f2531, skin = 0xf1d5c7, silver = 0xe1e7ec;
+      const hairShadow = 0x677885, hairMid = 0xaab8c3, hairLight = 0xd5dce2;
+      const mint = 0x80efb2, mintShadow = 0x379672;
+      const materials = new Map();
+      function mesh(parent, geometry, color, x, y, z) {
+        if (!materials.has(color)) {
+          materials.set(color, new THREE.MeshStandardMaterial({
+            color: new THREE.Color(color).convertSRGBToLinear(), roughness: 0.82, flatShading: true
+          }));
+        }
+        const piece = new THREE.Mesh(geometry, materials.get(color));
+        piece.position.set(x, y, z);
+        piece.castShadow = true;
+        piece.receiveShadow = true;
+        parent.add(piece);
+        return piece;
       }
-      for (const arm of [armL, armR]) {
-        arm.add(part(0.31, 0.36, 0.33, shirt, 0, -0.16, 0));
-        arm.add(part(0.23, 0.36, 0.24, skin, 0, -0.50, 0));
+      function box(parent, color, x, y, z, w, h, d) {
+        return mesh(parent, new THREE.BoxGeometry(w,h,d), color, x,y,z);
       }
-      rigRoot.add(part(0.78, 0.85, 0.46, shirt, 0, 1.11, 0));
-      headGroup.add(part(0.76, 0.76, 0.76, skin, 0, 0.36, 0));
-      addFaceToHead(0x188e89, 0x677a80);
-      headGroup.add(part(0.83, 0.29, 0.83, hair, 0, 0.72, 0));
-      headGroup.add(part(0.80, 0.44, 0.19, 0x778991, 0, 0.45, -0.34));
-      for (const [x, y, tilt] of [[-0.34, 0.46, 0.17], [-0.15, 0.61, -0.19], [0.04, 0.56, -0.22], [0.23, 0.64, -0.24], [0.37, 0.51, -0.16]]) {
-        const lock = part(0.18, 0.32, 0.16, hair, x, y, 0.37);
-        lock.rotation.z = tilt;
-        headGroup.add(lock);
+      // Shallow solid cutouts give hair, lapels and the guitar a readable side profile.
+      function cut(parent, color, outline, z, depth) {
+        const shape = new THREE.Shape(outline.map(([x,y]) => new THREE.Vector2(x,y)));
+        const geo = new THREE.ExtrudeGeometry(shape, {depth, bevelEnabled:false});
+        return mesh(parent, geo, color, 0,0,z);
       }
-      headGroup.add(part(0.08, 0.12, 0.18, 0x85ad6c, -0.32, 0.01, 0.16));
+
+      for (const [side,leg,arm] of [[-1,legL,armL],[1,legR,armR]]) {
+        box(leg,0x635c69,0,-.18,0,.32,.38,.33);
+        box(leg,0xb44751,0,-.42,.004,.33,.16,.34);
+        box(leg,0x9e303f,0,-.53,.008,.34,.12,.35);
+        box(leg,0x353442,0,-.61,.045,.34,.10,.42);
+        box(leg,0xcdc4be,0,-.65,.055,.35,.045,.44);
+        box(arm,ink,0,-.10,0,.32,.26,.33);
+        box(arm,skin,0,-.39,0,.22,.45,.24);
+        box(arm,0x282c36,0,-.46,0,.24,.18,.26);
+        box(arm,silver,0,-.53,.005,.245,.036,.265);
+        box(arm,skin,0,-.63,.018,.22,.16,.24);
+        box(rigRoot,mintShadow,.335*side,1.20,-.02,.10,.57,.39);
+      }
+      box(rigRoot,0x20242b,0,1.08,0,.70,.80,.41);
+      box(rigRoot,0x6db28d,0,1.16,-.21,.71,.67,.08);
+      cut(rigRoot,mint,[[-.36,1.52],[-.17,1.49],[-.12,1.30],[-.18,1.09],[-.20,.84],[-.38,.87]],.213,.045);
+      cut(rigRoot,0x6ddaa3,[[.15,1.50],[.36,1.51],[.39,.88],[.21,.84],[.19,1.11],[.11,1.31]],.213,.045);
+      cut(rigRoot,0xc1ffcf,[[-.34,1.52],[-.18,1.50],[-.12,1.33],[-.24,1.22]],.260,.012);
+      cut(rigRoot,0xaff9c8,[[.33,1.52],[.17,1.50],[.12,1.34],[.22,1.22]],.260,.012);
+      box(rigRoot,ink,0,.75,.01,.72,.085,.45);
+      box(rigRoot,silver,.02,.76,.248,.12,.065,.025);
+      box(rigRoot,skin,0,1.53,0,.28,.20,.25);
+      box(rigRoot,0x616b75,0,1.53,.005,.29,.056,.27);
+      for(const side of [-1,1]) {
+        const chain=box(rigRoot,silver,.069*side,1.379,.234,.019,.195,.021);
+        chain.rotation.z=-side*.65;
+      }
+      mesh(rigRoot,new THREE.TorusGeometry(.053,.014,4,10),silver,0,1.255,.245);
+
+      cut(headGroup,skin,[[-.347,.65],[.347,.65],[.347,.23],[.28,.10],[.10,.005],[-.105,.005],[-.29,.10],[-.347,.22]],-.30,.614);
+      for(const side of [-1,1]){
+        box(headGroup,skin,side*.36,.30,.007,.094,.145,.16);
+        const eye = new THREE.Group();
+        eye.position.set(side*.154,.322,.316);
+        eye.rotation.z=side*.072;
+        headGroup.add(eye);
+        cut(eye,0xfff4e8,[[-.115,.021],[-.054,.060],[.095,.048],[.111,.012],[.05,-.042],[-.068,-.030]],0,.013);
+        box(eye,0x126c6b,.003,-.001,.020,.077,.077,.014);
+        box(eye,0x54e8d4,.003,-.025,.029,.064,.026,.005);
+        box(eye,ink,.003,.012,.030,.030,.048,.005);
+        box(eye,0xf7ffef,-.016,.026,.034,.022,.019,.005);
+        cut(eye,0x34424e,[[-.126,.022],[-.077,.073],[.099,.064],[.119,.04],[-.063,.047]],.036,.009);
+        const brow=box(headGroup,0x687680,side*.164,.425,.32,.178,.029,.022);
+        brow.rotation.z=side*.15;
+      }
+      cut(headGroup,0xbc837c,[[-.056,.13],[.045,.134],[.073,.147],[.046,.119],[-.04,.115]],.318,.009);
+      box(headGroup,0xe0b4a6,0,.248,.324,.034,.05,.025);
+      // A jagged crown and tapered individual locks break the square head outline.
+      cut(headGroup,hairShadow,[[-.43,.58],[-.37,.76],[-.18,.83],[.02,.82],[.18,.88],[.25,.79],[.39,.74],[.43,.52],[.37,.10],[.26,.03],[.24,.17],[-.22,.16],[-.33,.05],[-.37,.18],[-.44,.13]],-.38,.45);
+      cut(headGroup,hairMid,[[-.40,.42],[-.46,.64],[-.38,.62],[-.30,.77],[-.16,.78],[-.22,.87],[-.05,.81],[.09,.94],[.11,.84],[.29,.81],[.43,.69],[.39,.55],[.45,.57],[.38,.31],[.34,.43],[-.34,.40]],-.16,.46);
+      cut(headGroup,hairShadow,[[-.395,.64],[-.30,.66],[-.31,.31],[-.39,.19],[-.385,.34],[-.46,.28]],.016,.235);
+      cut(headGroup,hairMid,[[.31,.67],[.41,.62],[.46,.30],[.40,.36],[.36,.20],[.31,.33]],.023,.238);
+      cut(headGroup,hairLight,[[-.39,.59],[-.29,.74],[-.07,.79],[-.11,.60],[-.25,.43],[-.22,.54],[-.38,.39]],.269,.075);
+      cut(headGroup,hairMid,[[-.20,.66],[-.07,.79],[.19,.78],[.11,.62],[-.075,.29],[-.058,.47],[-.18,.385],[-.13,.55]],.292,.085);
+      cut(headGroup,hairLight,[[.05,.74],[.205,.79],[.36,.69],[.40,.48],[.34,.51],[.31,.34],[.24,.49],[.17,.56],[.11,.46]],.274,.088);
+      cut(headGroup,0xe6e9e8,[[-.305,.658],[-.18,.747],[-.11,.747],[-.23,.676]],.347,.007);
+      cut(headGroup,0xcbd6dd,[[-.05,.694],[.092,.755],[-.01,.60],[-.09,.492]],.378,.007);
+      // Final-round headset with its red monitor light and the boom across the cheek.
+      box(headGroup,ink,.393,.296,.073,.114,.157,.19);
+      box(headGroup,0xff514f,.436,.309,.171,.044,.049,.022);
+      box(headGroup,ink,.385,.235,.213,.035,.043,.23);
+      const boom=box(headGroup,ink,.272,.208,.319,.23,.026,.032);
+      boom.rotation.z=.14;
+      box(headGroup,0x3a3941,.152,.194,.327,.076,.050,.043);
+
       const guitar = new THREE.Group();
       guitar.name = "Till guitar";
-      guitar.add(part(0.44, 0.35, 0.12, 0x205b52, 0, 0, 0));
-      guitar.add(part(0.32, 0.23, 0.13, 0x347b6b, 0, 0.22, 0));
-      guitar.add(part(0.10, 0.64, 0.085, 0x56403c, 0, 0.59, 0));
-      guitar.add(part(0.14, 0.20, 0.09, 0x346759, 0, 0.99, 0));
-      guitar.add(part(0.17, 0.07, 0.03, 0xe1d6b9, 0, 0.12, 0.08));
-      guitar.position.set(0.30, 0.91, 0.48);
+      const body=[[-.24,-.13],[-.18,-.25],[.09,-.27],[.23,-.16],[.24,-.03],[.17,.08],[.18,.26],[.08,.19],[.045,.15],[-.04,.15],[-.16,.31],[-.19,.29],[-.15,.11],[-.24,.013]];
+      cut(guitar,0x18383d,body,-.065,.115);
+      const front=cut(guitar,0x358978,body,.049,.016);
+      front.scale.set(.95,.95,1);
+      cut(guitar,0xc4dacf,[[-.10,.13],[.11,.11],[.09,-.12],[-.04,-.16],[-.102,-.07]],.067,.015);
+      box(guitar,0x473a41,0,.49,.026,.095,.73,.065);
+      for (const y of [.22,.30,.39,.49,.60,.72]) box(guitar,0xc1c0b7,0,y,.065,.094,.012,.012);
+      for (const y of [.06,-.033,-.133]) box(guitar,ink,0,y,.088,.14,.034,.026);
+      cut(guitar,0x286854,[[-.052,.84],[.048,.83],[.095,1.045],[.043,1.08],[-.073,1.01]],.0,.068);
+      for (const x of [-.024,0,.024]) box(guitar,0xcccdbf,x,.394,.104,.006,1.055,.006);
+      for (const y of [.88,.95,1.015]) box(guitar,silver,.069,y,.03,.061,.03,.04);
+      guitar.position.set(.27,.925,.44);
       guitar.rotation.z = 1.04;
       rigRoot.add(guitar);
+
     } else if (isNaoya) {
       // ⚡ 3. NAOYA ZENIN (@Godkingters 2.0) - Poros Pinggul & Bahu Presisi
       legL.add(part(0.42, 0.56, 0.44, 0xe7e5e4, 0, -0.28, 0));
@@ -407,7 +487,8 @@ window.addEventListener("DOMContentLoaded", () => {
   tillRig.position.set(0, 0, 0);
   tillResident.add(tillRig);
   const tillPose = tillRig.userData;
-  tillPose.armL.rotation.set(-0.99, 0, 0.13);
+  tillPose.armL.position.z = -0.08;
+  tillPose.armL.rotation.set(-1.42, 0, 0.18);
   tillPose.armR.rotation.set(-0.88, 0, -0.25);
 
   window.spawnCitizenAvatarOnHouse = function (houseGroup, username, fallbackColor, avatarType) {
