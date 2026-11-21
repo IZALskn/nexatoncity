@@ -40,19 +40,14 @@ window.addEventListener("DOMContentLoaded", () => {
   // 1. KEMBALIKAN WARNA CERAH (ANTI-ABU-ABU) + BEBAS GLITCH
   // ---------------------------------------------------------
   if (typeof renderer !== "undefined") {
-    renderer.toneMapping = THREE.NoToneMapping; // Warna asli cerah 100% tanpa kabut abu-abu
     renderer.outputEncoding = THREE.sRGBEncoding;
   }
 
   if (typeof sunLight !== "undefined") {
-    sunLight.intensity = 1.18;
     sunLight.color.setHex(0xfffbeb);
     sunLight.shadow.bias = -0.0005;
     sunLight.shadow.normalBias = 0.02;
   }
-
-  if (typeof ambientLight !== "undefined") ambientLight.intensity = 0.72;
-  if (typeof hemiLight !== "undefined") hemiLight.intensity = 0.42;
 
   if (typeof cityGroup !== "undefined") {
     cityGroup.traverse((obj) => {
@@ -67,18 +62,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  const origUpdateEnv = window.updateGlobalSyncedEnvironment;
-  window.updateGlobalSyncedEnvironment = function () {
-    origUpdateEnv();
-    if (typeof ambientLight !== "undefined") ambientLight.intensity = isNight ? 0.35 : 0.72;
-    if (typeof hemiLight !== "undefined") hemiLight.intensity = isNight ? 0.22 : 0.42;
-    if (typeof sunLight !== "undefined") {
-      const s = seasons[currentSeasonIdx];
-      sunLight.intensity = isNight ? 0.38 : (s.id === "rain" ? 0.75 : 1.18);
-    }
-  };
-  window.updateGlobalSyncedEnvironment();
 
   function part(w, h, d, hex, x, y, z, opts = {}) {
     const geo = new THREE.BoxGeometry(w, h, d);

@@ -1074,6 +1074,7 @@ const seasons = [
     hemiGroundHex: 0x334155,
     particleHex: 0x38bdf8,
     particleScale: [0.06, 0.65, 0.06],
+    sunDayIntensity: 0.75,
     fallSpeed: 0.48,
     drift: 0.005,
     showParticles: true
@@ -1082,15 +1083,17 @@ const seasons = [
     id: "snow",
     badge: "❄️ Salju",
     biomeLabel: "Salju di taman",
-    groundHex: 0xf8fafc,
-    foliagePalette: [0xe2e8f0, 0xf1f5f9, 0xcbd5e1],
-    skyDayHex: 0xcbd5e1,
-    ambientDayHex: 0xe0f2fe,
-    hemiGroundHex: 0xffffff,
-    particleHex: 0xffffff,
-    particleScale: [0.2, 0.2, 0.2],
-    fallSpeed: 0.06,
-    drift: 0.03,
+    groundHex: 0xc3d1d6,
+    foliagePalette: [0x79958c, 0x9bafa9, 0xb7caca],
+    skyDayHex: 0xa9bfcd,
+    ambientDayHex: 0xe1e9ec,
+    hemiGroundHex: 0x8b9d9f,
+    particleHex: 0xd2dfe3,
+    particleScale: [0.23, 0.13, 0.23],
+    fallSpeed: 0.035,
+    drift: 0.016,
+    sunDayIntensity: 0.76,
+    ambientDayIntensity: 0.62,
     showParticles: true
   }
 ];
@@ -1143,14 +1146,17 @@ function updateGlobalSyncedEnvironment() {
       mat.color.setHex(s.foliagePalette[i % s.foliagePalette.length]);
     });
 
+    // Soften bright snow and roofs under the winter sky while retaining night contrast.
+    renderer.toneMapping = s.id === "snow" && !isNight ? THREE.ReinhardToneMapping : THREE.NoToneMapping;
     const skyHex = isNight ? 0x070b14 : s.skyDayHex;
     scene.background.setHex(skyHex);
     scene.fog.color.setHex(skyHex);
 
     ambientLight.color.setHex(isNight ? 0x1e293b : s.ambientDayHex);
-    ambientLight.intensity = isNight ? 0.32 : 0.72;
+    ambientLight.intensity = isNight ? 0.35 : (s.ambientDayIntensity ?? 0.72);
+    hemiLight.intensity = isNight ? 0.22 : 0.42;
     hemiLight.groundColor.setHex(isNight ? 0x090d16 : s.hemiGroundHex);
-    sunLight.intensity = isNight ? 0.35 : (s.id === "rain" ? 0.65 : 1.25);
+    sunLight.intensity = isNight ? 0.38 : (s.sunDayIntensity ?? 1.18);
 
     const raining = s.id === "rain";
     clickableHouses.forEach(({userData: house}) => {
@@ -1175,7 +1181,9 @@ function updateGlobalSyncedEnvironment() {
 
     weatherDrops.forEach(drop => {
       drop.visible = s.showParticles;
-      drop.material.color.setHex(s.particleHex);
+      const snowing = s.id === "snow";
+      drop.material.color.setHex(snowing && isNight ? 0x8799a7 : s.particleHex);
+      drop.material.opacity = snowing ? 0.60 : 0.9;
       drop.scale.set(s.particleScale[0], s.particleScale[1], s.particleScale[2]);
     });
   }
@@ -1331,19 +1339,25 @@ document.getElementById("claimModal").addEventListener("cancel", event => {
 });
 
 function openShopGateway(prefillUsername = "") {
-  if (prefillUsername) document.getElementById("shopUsernameInput").value = prefillUsername;
-  document.getElementById("shopModal").classList.remove("hidden");
+  const input = document.getElementById("shopUsernameInput");
+  input.value = prefillUsername;
+  input.setCustomValidity("");
+  document.getElementById("shopModal").showModal();
 }
 
-function closeShopGateway() { document.getElementById("shopModal").classList.add("hidden"); }
+function closeShopGateway() { document.getElementById("shopModal").close(); }
 
 function proceedToShopee() {
-  let username = document.getElementById("shopUsernameInput").value.trim();
-  if (!username) {
-    showToast("Masukkan @username TikTok kamu dulu.");
+  const input = document.getElementById("shopUsernameInput");
+  const key = usernameKey(input.value);
+  // Some original resident names predate the current TikTok handle format.
+  const resident = clickableHouses.find(({userData}) => userData.owner && usernameKey(userData.owner) === key);
+  if (!resident && (!/^[a-z0-9._]{1,24}$/.test(key) || key.endsWith("."))) {
+    input.setCustomValidity("Masukkan username TikTok yang benar, misalnya @namakamu.");
+    input.reportValidity();
     return;
   }
-  if (!username.startsWith("@")) username = "@" + username;
+  const username = resident ? resident.userData.owner : "@" + input.value.trim().replace(/^@/, "");
 
   const manualCopy = () => showToast(`Cantumkan ${username} di pesan untuk penjual di Shopee.`);
   try {
@@ -1365,6 +1379,7 @@ async function submitClaimHouse() {
   const status = document.getElementById("claimStatus");
   const username = usernameKey(document.getElementById("claimUsernameInput").value);
   const hid = Number(document.getElementById("claimPlot").value);
+  const characterRequest = document.getElementById("characterRequest").value.trim();
   if (!username) {
     status.textContent = "Masukkan username TikTok kamu.";
     return;
@@ -1372,6 +1387,10 @@ async function submitClaimHouse() {
   if (!document.getElementById("followConfirmCheck").checked || !hid) return;
   const existing = clickableHouses.find(h => h.userData.owner && usernameKey(h.userData.owner) === username);
   if (existing) {
+    if (characterRequest) {
+      status.textContent = "Username ini sudah punya rumah. Request di formulir ini hanya untuk pendaftaran rumah baru.";
+      return;
+    }
     closeClaimModal();
     visitHouse(existing);
     return;
@@ -1395,8 +1414,13 @@ async function submitClaimHouse() {
     if (!citySynced || !supabaseClient) throw new Error("offline");
     const record = { house_id: hid, username: owner };
     if (yard) record.has_yard = true;
+    if (characterRequest) record.character_request = characterRequest;
     const { error } = await supabaseClient.from("citizens").insert(record);
     if (error) {
+      if (characterRequest && ["PGRST204", "42703"].includes(error.code) && error.message?.includes("character_request")) {
+        status.textContent = "Penyimpanan request karakter belum aktif. Coba lagi nanti, atau kosongkan request untuk mendaftar rumah saja.";
+        return;
+      }
       if (error.code === "23505") {
         await loadCitizensData();
         populatePlotChoices();
@@ -1410,7 +1434,8 @@ async function submitClaimHouse() {
     refreshHousesState();
     document.getElementById("claimModal").close();
     focusOnHouse(target);
-    showToast(`Selamat datang, ${owner}! Rumah #${hid} sudah terdaftar.`);
+    const receipt = characterRequest ? " Request karakter diterima untuk ditinjau." : "";
+    showToast(`Selamat datang, ${owner}! Rumah #${hid} sudah terdaftar.${receipt}`);
   } catch (err) {
     status.textContent = "Pendaftaran belum terkonfirmasi. Cek koneksi lalu coba lagi.";
   } finally {

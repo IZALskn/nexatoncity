@@ -29,7 +29,7 @@
   </div>
 
   <header class="map-header">
-    <div class="city-brand"><span class="item-icon icon-block" aria-hidden="true"></span><div>
+    <div class="city-brand"><span class="item-icon icon-mayor" aria-hidden="true"></span><div>
       <h1>Nexaton City</h1>
       <p><b id="hudCitizens">–</b> warga · <b id="hudEmpty">–</b> rumah kosong · <b id="hudIslands">1</b> pulau</p>
     </div></div>
@@ -44,6 +44,7 @@
         <button onclick="showCityOverview()" title="Tampilkan seluruh permukiman"><span class="item-icon icon-map" aria-hidden="true"></span>Peta kota</button>
         <button onclick="tourResidents()"><span class="item-icon icon-mayor" aria-hidden="true"></span>Tur warga</button>
         <button onclick="openClaimModal()"><span class="item-icon icon-home" aria-hidden="true"></span>Daftar rumah</button>
+        <button type="button" onclick="openShopGateway()"><span class="shop-icon" aria-hidden="true">🛍️</span>Toko Shopee</button>
         <button onclick="openMayorDialog()"><span class="item-icon icon-hat" aria-hidden="true"></span>Wali kota</button>
         <button onclick="document.getElementById('topupDialog').showModal()"><span class="item-icon icon-coin" aria-hidden="true"></span>Top up</button>
       </nav>
@@ -69,6 +70,9 @@
     <form id="claimForm" onsubmit="event.preventDefault(); submitClaimHouse()">
       <label for="claimUsernameInput">Username TikTok</label>
       <input id="claimUsernameInput" placeholder="@namakamu" required autocomplete="off" autocapitalize="none" spellcheck="false">
+      <label for="characterRequest">Request karakter (opsional)</label>
+      <input id="characterRequest" maxlength="80" placeholder="Misalnya Hu Tao dari Genshin Impact" aria-describedby="characterHelp">
+      <p id="characterHelp">Wali kota akan meninjau permintaanmu dan menambahkan karakter secara manual.</p>
       <label for="claimPlot">Pilih rumah kosong</label>
       <select id="claimPlot" required></select>
       <p>Satu username mendapat satu rumah. Sudah terdaftar? Cari username untuk mengunjungi rumahmu.</p>
@@ -92,41 +96,15 @@
     </div>
   </dialog>
 
-  <!-- MODAL 2: SHOP GATEWAY -->
-  <div id="shopModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="mc-panel rounded-2xl max-w-md w-full overflow-hidden text-white shadow-2xl">
-      <div class="bg-slate-900 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40">DEKORASI VILA</span>
-          <h2 class="pixel-font text-xs sm:text-sm text-white mt-1.5">Toko dekorasi</h2>
-        </div>
-        <button onclick="closeShopGateway()" class="bg-rose-600 hover:bg-rose-500 text-white font-black w-8 h-8 rounded-lg border-2 border-rose-400">✕</button>
-      </div>
-
-      <div class="p-5 space-y-4">
-        <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-700 space-y-2.5">
-          <div class="text-xs font-extrabold text-amber-400">Username TikTok pemilik rumah</div>
-          <p class="text-[11px] text-slate-300 leading-relaxed">
-            Gunakan <strong class="text-white">@username</strong> yang terdaftar di rumah untuk memesan dekorasi vila di Shopee.
-          </p>
-          <input
-            id="shopUsernameInput"
-            type="text"
-            placeholder="@namakamu"
-            class="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-600 focus:outline-none focus:border-amber-400"
-          />
-        </div>
-
-        <div class="bg-amber-950/40 border border-amber-500/40 p-3 rounded-xl text-[11px] text-amber-200 leading-relaxed">
-          Cantumkan <strong>@username</strong> di pesan untuk penjual saat memesan dekorasi di Shopee.
-        </div>
-
-        <button onclick="proceedToShopee()" class="mc-btn-gold w-full py-3.5 rounded-xl text-center text-slate-950 font-black text-xs sm:text-sm block">
-          Salin username dan buka Shopee
-        </button>
-      </div>
-    </div>
-  </div>
+  <dialog id="shopModal" class="city-dialog" aria-labelledby="shopTitle">
+    <div class="dialog-title"><h2 id="shopTitle">Toko Shopee</h2><button type="button" onclick="closeShopGateway()" aria-label="Tutup">×</button></div>
+    <form onsubmit="event.preventDefault(); proceedToShopee()">
+      <label for="shopUsernameInput">Username TikTok pemilik rumah</label>
+      <input id="shopUsernameInput" type="text" placeholder="@namakamu" autocapitalize="none" autocomplete="off" spellcheck="false" required autofocus oninput="this.setCustomValidity('')" aria-describedby="shopHelp">
+      <p id="shopHelp">Saat memesan dekorasi, cantumkan @username ini di pesan untuk penjual agar pesanan cocok dengan rumahmu.</p>
+      <button type="submit" class="primary">Salin username dan buka Shopee</button>
+    </form>
+  </dialog>
 
   <!-- MODAL 3: REAL 3D CUTAWAY ROOM INTERIOR -->
   <div id="interiorModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3">

@@ -179,6 +179,7 @@ button.primary { background: var(--aqua); color: #fff; border: 0; }
 }
 .city-menu-items button:hover,.city-menu-items button:focus-visible { background: #dcedf7; }
 .city-menu-items .item-icon { --item-size: 25px; }
+.city-menu-items .shop-icon { width: 25px; text-align: center; font-size: 20px; line-height: 1; }
 .city-dialog { border: 2px solid #53788c; border-radius: 10px; background: #f5fbff; box-shadow: 0 8px 36px #10283e55; }
 .dialog-title { border-bottom: 2px solid #bad5e7; }
 .dialog-title h2 { font-size: 14px; line-height: 1.6; }
