@@ -54,6 +54,13 @@ scene.add(sunLight);
 const cityGroup = new THREE.Group();
 scene.add(cityGroup);
 
+// The resident requested by @d4rxcl1nxbeetmas performs on the fountain's east apron.
+const tillResident = new THREE.Group();
+tillResident.position.set(3.45, 0.26, 0.65);
+tillResident.rotation.y = 0.42;
+tillResident.userData.owner = "Till";
+cityGroup.add(tillResident);
+
 const smokeParticles = [];
 const fountainDrops = [];
 const nightWindows = [];
@@ -1300,7 +1307,7 @@ function refreshHousesState() {
   });
 
   updateWindowLights();
-  document.getElementById("hudCitizens").textContent = claimedCount;
+  document.getElementById("hudCitizens").textContent = claimedCount + 1;
   document.getElementById("hudEmpty").textContent = clickableHouses.length - claimedCount;
 }
 
@@ -1477,8 +1484,17 @@ function focusOnHouse(house) {
 }
 
 let tourIndex = 0;
+function cityResidents() {
+  return [...clickableHouses.filter(house => house.userData.owner), tillResident];
+}
+
+function residentLabel(resident) {
+  if (resident === tillResident) return "Till · Alien Stage · Air mancur";
+  return `${resident.userData.owner} · Rumah #${resident.userData.id}`;
+}
+
 function tourResidents() {
-  const residents = clickableHouses.filter(house => house.userData.owner);
+  const residents = cityResidents();
   if (residents.length) visitHouse(residents[tourIndex++ % residents.length]);
 }
 
@@ -1490,7 +1506,7 @@ function visitHouse(house) {
   document.getElementById("searchResults").hidden = true;
   document.getElementById("searchInput").blur();
   focusOnHouse(house);
-  showToast(`${house.userData.owner} · Rumah #${house.userData.id}`);
+  showToast(residentLabel(house));
 }
 
 function searchCitizen(submitted = false) {
@@ -1499,13 +1515,16 @@ function searchCitizen(submitted = false) {
   results.replaceChildren();
   results.hidden = !q;
   if (!q) return;
-  const matches = clickableHouses.filter(h => h.userData.owner && usernameKey(h.userData.owner).includes(q));
+  const matches = cityResidents().filter(resident =>
+    usernameKey(resident.userData.owner).includes(q) ||
+    (resident === tillResident && "till alien stage".includes(q))
+  );
   const exact = matches.find(h => usernameKey(h.userData.owner) === q);
   if (submitted && (exact || matches.length === 1)) return visitHouse(exact || matches[0]);
   for (const house of matches) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = `${house.userData.owner} · Rumah #${house.userData.id}`;
+    btn.textContent = residentLabel(house);
     btn.onclick = () => visitHouse(house);
     results.append(btn);
   }
@@ -1538,12 +1557,13 @@ renderer.domElement.addEventListener("pointerup", (e) => {
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
 
-  const intersects = raycaster.intersectObjects([mayorGroup, ...clickableHouses], true);
+  const intersects = raycaster.intersectObjects([mayorGroup, tillResident, ...clickableHouses], true);
   for (const hit of intersects) {
     let obj = hit.object;
-    while (obj.visible && obj.parent && obj !== mayorGroup && !obj.userData.name) obj = obj.parent;
+    while (obj.visible && obj.parent && obj !== mayorGroup && obj !== tillResident && !obj.userData.name) obj = obj.parent;
     if (!obj.visible) continue;
     if (obj === mayorGroup) return openMayorDialog();
+    if (obj === tillResident) return visitHouse(tillResident);
     if (obj.userData.name) return open3DInterior(obj.userData);
   }
 });

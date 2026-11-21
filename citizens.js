@@ -247,6 +247,37 @@ window.addEventListener("DOMContentLoaded", () => {
       boo.position.set(-0.85, 2.0, 0.25);
       rigRoot.add(boo);
 
+    } else if (avatarType === "till") {
+      const skin = 0xf2d9cd, hair = 0x9caaaf, shirt = 0xe8e6e1;
+      for (const leg of [legL, legR]) {
+        leg.add(part(0.32, 0.52, 0.34, 0xa8323d, 0, -0.26, 0));
+        leg.add(part(0.34, 0.16, 0.42, 0x292b30, 0, -0.58, 0.04));
+      }
+      for (const arm of [armL, armR]) {
+        arm.add(part(0.31, 0.36, 0.33, shirt, 0, -0.16, 0));
+        arm.add(part(0.23, 0.36, 0.24, skin, 0, -0.50, 0));
+      }
+      rigRoot.add(part(0.78, 0.85, 0.46, shirt, 0, 1.11, 0));
+      headGroup.add(part(0.76, 0.76, 0.76, skin, 0, 0.36, 0));
+      addFaceToHead(0x188e89, 0x677a80);
+      headGroup.add(part(0.83, 0.29, 0.83, hair, 0, 0.72, 0));
+      headGroup.add(part(0.80, 0.44, 0.19, 0x778991, 0, 0.45, -0.34));
+      for (const [x, y, tilt] of [[-0.34, 0.46, 0.17], [-0.15, 0.61, -0.19], [0.04, 0.56, -0.22], [0.23, 0.64, -0.24], [0.37, 0.51, -0.16]]) {
+        const lock = part(0.18, 0.32, 0.16, hair, x, y, 0.37);
+        lock.rotation.z = tilt;
+        headGroup.add(lock);
+      }
+      headGroup.add(part(0.08, 0.12, 0.18, 0x85ad6c, -0.32, 0.01, 0.16));
+      const guitar = new THREE.Group();
+      guitar.name = "Till guitar";
+      guitar.add(part(0.44, 0.35, 0.12, 0x205b52, 0, 0, 0));
+      guitar.add(part(0.32, 0.23, 0.13, 0x347b6b, 0, 0.22, 0));
+      guitar.add(part(0.10, 0.64, 0.085, 0x56403c, 0, 0.59, 0));
+      guitar.add(part(0.14, 0.20, 0.09, 0x346759, 0, 0.99, 0));
+      guitar.add(part(0.17, 0.07, 0.03, 0xe1d6b9, 0, 0.12, 0.08));
+      guitar.position.set(0.30, 0.91, 0.48);
+      guitar.rotation.z = 1.04;
+      rigRoot.add(guitar);
     } else if (isNaoya) {
       // ⚡ 3. NAOYA ZENIN (@Godkingters 2.0) - Poros Pinggul & Bahu Presisi
       legL.add(part(0.42, 0.56, 0.44, 0xe7e5e4, 0, -0.28, 0));
@@ -372,6 +403,13 @@ window.addEventListener("DOMContentLoaded", () => {
     return charGroup;
   };
 
+  const tillRig = window.buildDetailedCharacterRig("Till", 0xe8e6e1, "till");
+  tillRig.position.set(0, 0, 0);
+  tillResident.add(tillRig);
+  const tillPose = tillRig.userData;
+  tillPose.armL.rotation.set(-0.99, 0, 0.13);
+  tillPose.armR.rotation.set(-0.88, 0, -0.25);
+
   window.spawnCitizenAvatarOnHouse = function (houseGroup, username, fallbackColor, avatarType) {
     if (houseGroup.userData.avatarMesh) return;
     const charGroup = window.buildDetailedCharacterRig(username, fallbackColor, avatarType);
@@ -392,6 +430,8 @@ window.addEventListener("DOMContentLoaded", () => {
     citizenAvatars.length = 0; // Pastikan loop lama di world.js tetap nonaktif
 
     const nowSec = Date.now() / 1000;
+    tillPose.armR.rotation.x = -0.88 + 0.09 * Math.sin(nowSec * 7.5);
+    tillPose.headGroup.rotation.x = 0.07 + 0.035 * Math.sin(nowSec * 3.75);
     const activeSeasonId = (typeof seasons !== "undefined" && seasons[currentSeasonIdx])
       ? seasons[currentSeasonIdx].id
       : "sakura";
