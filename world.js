@@ -1337,18 +1337,26 @@ function openShopGateway(prefillUsername = "") {
 
 function closeShopGateway() { document.getElementById("shopModal").classList.add("hidden"); }
 
-function proceedToShopify() {
-  let u = document.getElementById("shopUsernameInput").value.trim();
-  if (!u) {
-    showToast("⚠️ Please enter your TikTok @username first!");
+function proceedToShopee() {
+  let username = document.getElementById("shopUsernameInput").value.trim();
+  if (!username) {
+    showToast("Masukkan @username TikTok kamu dulu.");
     return;
   }
-  if (!u.startsWith("@")) u = "@" + u;
-  try { navigator.clipboard.writeText(`TikTok Username: ${u}`); } catch (e) {}
-  localStorage.setItem("nexaton_last_buyer", u);
+  if (!username.startsWith("@")) username = "@" + username;
+
+  const manualCopy = () => showToast(`Cantumkan ${username} di pesan untuk penjual di Shopee.`);
+  try {
+    navigator.clipboard.writeText(`TikTok Username: ${username}`).then(
+      () => showToast(`${username} disalin. Tempel di pesan untuk penjual di Shopee.`),
+      manualCopy
+    );
+  } catch {
+    manualCopy();
+  }
+  try { localStorage.setItem("nexaton_last_buyer", username); } catch {}
   closeShopGateway();
-  showToast(`✅ Copied "${u}"! Paste it in the Shopify Cart Note at checkout!`);
-  setTimeout(() => { window.open("https://pevcsr-r6.myshopify.com", "_blank"); }, 600);
+  window.open("https://shopee.co.id/izalrifai012?categoryId=100015&entryPoint=ShopByPDP&itemId=51871971197", "_blank", "noopener,noreferrer");
 }
 
 async function submitClaimHouse() {
